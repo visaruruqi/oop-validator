@@ -1,4 +1,4 @@
-import IValidationRule from "../IValidationRule.ts";
+import IValidationRule from "./IValidationRule.ts";
 
 export  default class DomainValidationRule implements IValidationRule {
     private errorMessage: string = "This field must be a valid domain.";

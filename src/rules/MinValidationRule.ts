@@ -1,4 +1,4 @@
-import IValidationRule from "../IValidationRule.ts";
+import IValidationRule from "./IValidationRule.ts";
 
 export default class MinValidationRule implements IValidationRule {
     private minLength: number = 0;

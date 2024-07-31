@@ -1,4 +1,4 @@
-import IValidationRule from '../IValidationRule';
+import IValidationRule from './IValidationRule';
 
 export default class RequiredValidationRule implements IValidationRule {
     private errorMessage: string = "This field is required.";

@@ -1,4 +1,4 @@
-import IValidationRule from "../IValidationRule.ts";
+import IValidationRule from "./IValidationRule.ts";
 
 export default class EmailValidationRule implements IValidationRule {
     private errorMessage: string = "This field must be a valid email address.";

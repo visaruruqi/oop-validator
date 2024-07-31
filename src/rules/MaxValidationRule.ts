@@ -1,4 +1,4 @@
-import IValidationRule from "../IValidationRule.ts";
+import IValidationRule from "./IValidationRule.ts";
 
 export default class MaxValidationRule implements IValidationRule {
     private maxLength: number = Infinity;
