@@ -5,3 +5,4 @@ dist/
 .vscode/
 .idea/
 *.log
+node_modules/.vite/vitest/results.json
