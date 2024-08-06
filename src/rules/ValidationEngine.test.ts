@@ -45,7 +45,7 @@ describe('ValidationEngine', () => {
     });
 
     it('should validate a value with a custom rule', () => {
-        class CustomRule implements IValidationRule {
+        class CustomRule extends IValidationRule {
             private errorMessage: string = "This field must be 'custom'.";
 
             isValid(param: string): [boolean, string] {

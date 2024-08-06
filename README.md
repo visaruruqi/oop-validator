@@ -51,7 +51,7 @@ if (!usernameResult.isValid) {
 ```
 import { IValidationRule } from 'oop-validator';
 
-export class PhoneNumberValidationRule implements IValidationRule {
+export class PhoneNumberValidationRule extends IValidationRule {
     private errorMessage: string = "This field must be a valid phone number.";
 
     isValid(param: string): [boolean, string] {
