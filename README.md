@@ -49,20 +49,24 @@ if (!usernameResult.isValid) {
 ## Custom Validation Rule
 
 ```
-class CustomRule implements IValidationRule {
-    private errorMessage: string = "This field must be 'custom'.";
+import { IValidationRule } from 'oop-validator';
+
+export class PhoneNumberValidationRule implements IValidationRule {
+    private errorMessage: string = "This field must be a valid phone number.";
 
     isValid(param: string): [boolean, string] {
-        const isValid = param === 'custom';
+        // A simple regex for validating phone numbers
+        const phonePattern = /^\+?[1-9]\d{1,14}$/;
+        const isValid = phonePattern.test(param);
         return [isValid, isValid ? "" : this.errorMessage];
     }
 
     isMatch(type: string): boolean {
-        return type.toLowerCase() === 'custom';
+        return type.toLowerCase() === 'phone';
     }
 
     setParams(params: any): void {
-        // Custom parameters if needed
+        // No parameters needed for phone number rule
     }
 
     setErrorMessage(message: string): void {
@@ -70,11 +74,12 @@ class CustomRule implements IValidationRule {
     }
 }
 
-// Add the custom rule to the validation engine
-validationEngine.addRule(new CustomRule());
 
-const customFieldResult = validationEngine.validateValue('not-custom');
-if (!customFieldResult.isValid) {
-    console.log('Custom field validation errors:', customFieldResult.errors);
+// Add the custom rule to the validation engine
+validationEngine.addRule(new PhoneNumberValidationRule());
+
+const phoneResult = validationEngine.validateValue('+1234567890');
+if (!phoneResult.isValid) {
+    console.log('Phone validation errors:', phoneResult.errors);
 }
 ```
