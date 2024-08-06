@@ -1,6 +1,6 @@
-# FlexiValidate
+# oop-validator
 
-FlexiValidate is a versatile and robust validation library designed to seamlessly integrate with any UI framework or library. Whether you're building applications with Vue.js, React, Angular, or any other front-end technology, FlexiValidate provides a comprehensive and flexible solution for all your validation needs.
+oop-validator is a versatile and robust validation library designed to seamlessly integrate with any UI framework or library. Whether you're building applications with Vue.js, React, Angular, or any other front-end technology, oop-validator provides a comprehensive and flexible solution for all your validation needs.
 
 ## Key Features
 
@@ -13,15 +13,15 @@ FlexiValidate is a versatile and robust validation library designed to seamlessl
 
 ## Installation
 
-You can install FlexiValidate via npm:
+You can install oop-validator via npm:
 
 ```sh
-npm install flexivalidate
+npm install oop-validator
 ```
 ## USAGE
 
 ```
-import { ValidationEngine, RequiredValidationRule, MinValidationRule, MaxValidationRule, EmailValidationRule } from 'flexivalidate';
+import { ValidationEngine, RequiredValidationRule, MinValidationRule, MaxValidationRule, EmailValidationRule } from 'oop-validator';
 
 // Define the validation rules
 const rules = [
