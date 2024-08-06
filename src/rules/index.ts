@@ -3,6 +3,7 @@ import MinValidationRule from "./MinValidationRule.ts";
 import MaxValidationRule from "./MaxValidationRule.ts";
 import EmailValidationRule from "./EmailValidationRule.ts";
 import DomainValidationRule from "./DomainValidationRule.ts";
+import IValidationRule  from "./IValidationRule.js";
 
 export default {
     RequiredValidationRule,
@@ -10,5 +11,5 @@ export default {
     MaxValidationRule,
     EmailValidationRule,
     DomainValidationRule,
-
+    IValidationRule
 }

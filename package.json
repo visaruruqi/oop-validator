@@ -1,11 +1,32 @@
 {
-  "name": "hk-form-validations",
-  "private": true,
-  "version": "0.0.0",
+  "name": "oop-validator",
+  "version": "0.0.2",
   "type": "module",
+  "main": "dist/flexivalidate.umd.js",
+  "module": "dist/flexivalidate.es.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "Visar Uruqi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/visaruruqi/FlexiValidate"
+  },
+  "bugs": {
+    "url": "https://github.com/visaruruqi/FlexiValidate/issues"
+  },
+  "homepage": "https://github.com/visaruruqi/FlexiValidate",
+  "description": "A versatile and robust validation library for any UI framework.",
+  "keywords": [
+    "validation",
+    "library",
+    "framework-agnostic"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc --emitDeclarationOnly",
     "preview": "vite preview",
     "test": "vitest"
   },
