@@ -14,16 +14,6 @@ export default defineConfig({
             entry: './src/index.ts',
             name: 'oop-validator',
             fileName: (format) => `oop-validator.${format}.js`,
-        },
-        rollupOptions: {
-            // Make sure to externalize dependencies that shouldn't be bundled into your library
-            external: ['vue'],
-            output: {
-                // Provide global variables to use in the UMD build for externalized deps
-                globals: {
-                    vue: 'Vue',
-                },
-            },
-        },
+        }
     }
 });

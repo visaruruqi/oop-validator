@@ -1,6 +1,6 @@
 {
   "name": "oop-validator",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "main": "dist/oop-validator.umd.js",
   "module": "dist/oop-validator.es.js",
@@ -35,9 +35,7 @@
     "@vitest/ui": "^2.0.4",
     "typescript": "^5.2.2",
     "vite": "^5.3.4",
-    "vitest": "^2.0.4"
-  },
-  "dependencies": {
+    "vitest": "^2.0.4",
     "vue": "^3.4.34"
   }
 }

@@ -1,17 +1,7 @@
-import MinValidationRule from "./rules/MinValidationRule.ts";
-import EmailValidationRule from "./rules/EmailValidationRule.ts";
-import DomainValidationRule from "./rules/DomainValidationRule.ts";
-import MaxValidationRule from "./rules/MaxValidationRule.ts";
-import RequiredValidationRule from "./rules/RequiredValidationRule.ts";
-import ValidationEngine from "./rules/ValidationEngine.ts";
-import IValidationRule from "./rules/IValidationRule.ts";
-
-export default {
-    MinValidationRule,
-    EmailValidationRule,
-    DomainValidationRule,
-    MaxValidationRule,
-    RequiredValidationRule,
-    ValidationEngine,
-    IValidationRule
-}
+export { default as MinValidationRule } from "./rules/MinValidationRule.ts";
+export { default as EmailValidationRule } from "./rules/EmailValidationRule.ts";
+export { default as DomainValidationRule } from "./rules/DomainValidationRule.ts";
+export { default as MaxValidationRule } from "./rules/MaxValidationRule.ts";
+export { default as RequiredValidationRule } from "./rules/RequiredValidationRule.ts";
+export { default as ValidationEngine } from "./rules/ValidationEngine.ts";
+export { default as IValidationRule } from "./rules/IValidationRule.ts";
