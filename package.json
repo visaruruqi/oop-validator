@@ -1,9 +1,9 @@
 {
   "name": "oop-validator",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
-  "main": "dist/flexivalidate.umd.js",
-  "module": "dist/flexivalidate.es.js",
+  "main": "dist/oop-validator.umd.js",
+  "module": "dist/oop-validator.es.js",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist"
