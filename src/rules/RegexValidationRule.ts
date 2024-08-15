@@ -2,9 +2,9 @@ import IValidationRule from './IValidationRule.ts'
 
 export default class RegexValidationRule implements IValidationRule {
     private errorMessage: string = 'Field is invalid.'
-    private regexString
+    private regexString: string = '';
 
-    constructor(regex: String) {
+    constructor(regex: string) {
         this.regexString = regex
     }
 
@@ -25,7 +25,7 @@ export default class RegexValidationRule implements IValidationRule {
         this.errorMessage = message
     }
 
-    setRegex(regex: String) {
+    setRegex(regex: string) {
         this.regexString = regex
     }
 }
