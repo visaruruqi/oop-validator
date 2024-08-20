@@ -1,6 +1,6 @@
 {
   "name": "oop-validator",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "type": "module",
   "main": "dist/oop-validator.umd.js",
   "module": "dist/oop-validator.es.js",
@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/visaruruqi/FlexiValidate"
+    "url": "https://github.com/visaruruqi/oop-validator"
   },
   "bugs": {
-    "url": "https://github.com/visaruruqi/FlexiValidate/issues"
+    "url": "https://github.com/visaruruqi/oop-validator/issues"
   },
-  "homepage": "https://github.com/visaruruqi/FlexiValidate",
+  "homepage": "https://github.com/visaruruqi/oop-validator",
   "description": "A versatile and robust validation library for any UI framework.",
   "keywords": [
     "validation",

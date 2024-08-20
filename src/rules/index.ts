@@ -4,6 +4,7 @@ import MaxValidationRule from "./MaxValidationRule.ts";
 import EmailValidationRule from "./EmailValidationRule.ts";
 import DomainValidationRule from "./DomainValidationRule.ts";
 import IValidationRule  from "./IValidationRule.js";
+import RegexValidationRule from "@/rules/RegexValidationRule.ts";
 
 export default {
     RequiredValidationRule,
@@ -11,5 +12,6 @@ export default {
     MaxValidationRule,
     EmailValidationRule,
     DomainValidationRule,
-    IValidationRule
+    IValidationRule,
+    RegexValidationRule,
 }
