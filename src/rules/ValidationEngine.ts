@@ -4,6 +4,7 @@ import MinValidationRule from "./MinValidationRule.ts";
 import MaxValidationRule from "./MaxValidationRule.ts";
 import EmailValidationRule from "./EmailValidationRule.ts";
 import DomainValidationRule from "./DomainValidationRule.ts";
+import RegexValidationRule from "./RegexValidationRule.ts";
 
 export default class ValidationEngine {
     private rules: IValidationRule[] = [];
@@ -53,6 +54,9 @@ export default class ValidationEngine {
                 break;
             case 'domain':
                 validationRule = new DomainValidationRule();
+                break;
+            case 'regex':
+                validationRule = new RegexValidationRule(params.regex || '');
                 break;
             default:
                 console.warn(`Unknown validation rule: ${type}`);
