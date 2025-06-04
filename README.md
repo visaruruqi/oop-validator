@@ -178,3 +178,17 @@ function MyForm() {
 ```
 
 These snippets reuse the same rule configuration shown earlier, ensuring consistent validation logic across frameworks.
+=======
+## Vue Composable Helper
+
+For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive.
+
+```ts
+import { ref } from 'vue'
+import { useValidation } from 'oop-validator'
+
+const username = ref('')
+const { errors, isValid } = useValidation(username, ['required', { rule: 'min', params: { length: 3 } }])
+
+// `errors` and `isValid` update automatically when `username` changes
+```
