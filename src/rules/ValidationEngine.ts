@@ -13,6 +13,10 @@ export default class ValidationEngine {
         initialRules.forEach(rule => this.addRule(rule));
     }
 
+    getRules(): IValidationRule[] {
+        return this.rules;
+    }
+
     addRule(rule: string | { rule: string, params: any, message?: string } | IValidationRule) {
         if (typeof rule === 'object' && 'isValid' in rule) {
             this.rules.push(rule as IValidationRule);
