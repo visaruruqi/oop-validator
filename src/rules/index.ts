@@ -3,7 +3,7 @@ import MinValidationRule from "./MinValidationRule.ts";
 import MaxValidationRule from "./MaxValidationRule.ts";
 import EmailValidationRule from "./EmailValidationRule.ts";
 import DomainValidationRule from "./DomainValidationRule.ts";
-import IValidationRule  from "./IValidationRule.js";
+import IValidationRule  from "./IValidationRule.ts";
 import RegexValidationRule from "@/rules/RegexValidationRule.ts";
 
 export default {
