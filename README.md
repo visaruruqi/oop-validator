@@ -112,3 +112,69 @@ console.log(result.summary)     // full list of errors
 ```
 
 Custom rules like `MatchFieldValidationRule` can access other fields by name or via a callback, making dependent validations straightforward.
+
+## Reactive Framework Integration
+
+`FormValidationEngine` works well inside reactive workflows. Invoke `validate` whenever the form state changes so error information stays current.
+
+### Vue example
+
+```ts
+import { reactive, watch } from 'vue'
+import { FormValidationEngine, MatchFieldValidationRule } from 'oop-validator'
+
+const formEngine = new FormValidationEngine({
+  username: ['required'],
+  password: ['required', { rule: 'min', params: { length: 8 } }],
+  confirmPassword: [
+    'required',
+    new MatchFieldValidationRule('password')
+  ]
+})
+
+const state = reactive({
+  username: '',
+  password: '',
+  confirmPassword: '',
+  errors: {}
+})
+
+watch(state, (current) => {
+  const result = formEngine.validate(current)
+  state.errors = result.fieldErrors
+}, { deep: true })
+```
+
+### React example
+
+```tsx
+import { useEffect, useState } from 'react'
+import { FormValidationEngine, MatchFieldValidationRule } from 'oop-validator'
+
+const formEngine = new FormValidationEngine({
+  username: ['required'],
+  password: ['required', { rule: 'min', params: { length: 8 } }],
+  confirmPassword: [
+    'required',
+    new MatchFieldValidationRule('password')
+  ]
+})
+
+function MyForm() {
+  const [values, setValues] = useState({
+    username: '',
+    password: '',
+    confirmPassword: ''
+  })
+  const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    const result = formEngine.validate(values)
+    setErrors(result.fieldErrors)
+  }, [values])
+
+  // render ...
+}
+```
+
+These snippets reuse the same rule configuration shown earlier, ensuring consistent validation logic across frameworks.
