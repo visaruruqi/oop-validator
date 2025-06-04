@@ -39,4 +39,13 @@ export default class IValidationRule {
     setErrorMessage(message: string): void {
         throw new Error("setErrorMessage method must be implemented");
     }
+
+    /**
+     * Optional method for rules that need access to the full form context.
+     * @param values - The current form values.
+     */
+    // @ts-ignore
+    setContext?(values: Record<string, any>): void {
+        // Optional implementation
+    }
 }

@@ -83,3 +83,32 @@ if (!phoneResult.isValid) {
     console.log('Phone validation errors:', phoneResult.errors);
 }
 ```
+
+## Form Validation Example
+
+The `FormValidationEngine` helps validate multiple fields at once and collect a summary of problems. Each field uses the same rules that `ValidationEngine` understands.
+
+```ts
+import { FormValidationEngine, MatchFieldValidationRule } from 'oop-validator'
+
+const values = {
+  username: '',
+  password: '',
+  confirmPassword: ''
+}
+
+const formEngine = new FormValidationEngine({
+  username: ['required'],
+  password: ['required', { rule: 'min', params: { length: 8 } }],
+  confirmPassword: [
+    'required',
+    new MatchFieldValidationRule('password')
+  ]
+})
+
+const result = formEngine.validate(values)
+console.log(result.fieldErrors) // errors per field
+console.log(result.summary)     // full list of errors
+```
+
+Custom rules like `MatchFieldValidationRule` can access other fields by name or via a callback, making dependent validations straightforward.
