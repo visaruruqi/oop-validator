@@ -87,4 +87,17 @@ describe('ValidationEngine', () => {
         expect(result.isValid).toBe(false);
         expect(result.errors).toEqual(['This field is required.']);
     });
+
+    it('should create regex rule from configuration', () => {
+        const rules = [
+            { rule: 'regex', params: { regex: '^[a-z]+$' }, message: 'Only letters allowed.' }
+        ];
+
+        const validationEngine = new ValidationEngine(rules);
+
+        const result = validationEngine.validateValue('abc123');
+
+        expect(result.isValid).toBe(false);
+        expect(result.errors).toEqual(['Only letters allowed.']);
+    });
 });
