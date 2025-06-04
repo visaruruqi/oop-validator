@@ -9,6 +9,13 @@ describe('MinValidationRule', () => {
         expect(errorMessage).toBe('');
     });
 
+    it('should return true and empty message for an empty string', () => {
+        const rule = new RegexValidationRule("^[a-zA-Z]+$");
+        const [isValid, errorMessage] = rule.isValid('');
+        expect(isValid).toBe(true);
+        expect(errorMessage).toBe('');
+    });
+
     it('should return false for string that doesn\'t match the given regex', () => {
         const rule = new RegexValidationRule("^[a-zA-Z]$");
         const [isValid, errorMessage] = rule.isValid('test123');
