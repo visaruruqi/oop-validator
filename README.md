@@ -112,3 +112,17 @@ console.log(result.summary)     // full list of errors
 ```
 
 Custom rules like `MatchFieldValidationRule` can access other fields by name or via a callback, making dependent validations straightforward.
+
+## Vue Composable Helper
+
+For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive.
+
+```ts
+import { ref } from 'vue'
+import { useValidation } from 'oop-validator'
+
+const username = ref('')
+const { errors, isValid } = useValidation(username, ['required', { rule: 'min', params: { length: 3 } }])
+
+// `errors` and `isValid` update automatically when `username` changes
+```

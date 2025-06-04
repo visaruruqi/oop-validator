@@ -9,3 +9,4 @@ export { default as RegexValidationRule } from "./rules/RegexValidationRule.ts";
 
 export { default as FormValidationEngine } from "./form/FormValidationEngine.ts";
 export { default as MatchFieldValidationRule } from "./rules/MatchFieldValidationRule.ts";
+export { default as useValidation } from "./vue/useValidation.ts";
