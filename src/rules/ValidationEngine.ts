@@ -9,7 +9,7 @@ import RegexValidationRule from "./RegexValidationRule.ts";
 export default class ValidationEngine {
     private rules: IValidationRule[] = [];
 
-    constructor(initialRules: Array<string | { rule: string, params: any, message?: string }> = []) {
+    constructor(initialRules: Array<string | { rule: string, params: any, message?: string } | IValidationRule> = []) {
         initialRules.forEach(rule => this.addRule(rule));
     }
 
