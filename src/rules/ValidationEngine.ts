@@ -5,6 +5,17 @@ import MaxValidationRule from "./MaxValidationRule.ts";
 import EmailValidationRule from "./EmailValidationRule.ts";
 import DomainValidationRule from "./DomainValidationRule.ts";
 import RegexValidationRule from "./RegexValidationRule.ts";
+import BankAccountValidationRule from "./BankAccountValidationRule.ts";
+import CreditCardValidationRule from "./CreditCardValidationRule.ts";
+import ZipCodeValidationRule from "./ZipCodeValidationRule.ts";
+import PhoneNumberValidationRule from "./PhoneNumberValidationRule.ts";
+import DateValidationRule from "./DateValidationRule.ts";
+import UrlValidationRule from "./UrlValidationRule.ts";
+import UsernameValidationRule from "./UsernameValidationRule.ts";
+import PasswordStrengthValidationRule from "./PasswordStrengthValidationRule.ts";
+import IpAddressValidationRule from "./IpAddressValidationRule.ts";
+import CurrencyValidationRule from "./CurrencyValidationRule.ts";
+import SocialSecurityValidationRule from "./SocialSecurityValidationRule.ts";
 
 export default class ValidationEngine {
     private rules: IValidationRule[] = [];
@@ -61,6 +72,39 @@ export default class ValidationEngine {
                 break;
             case 'regex':
                 validationRule = new RegexValidationRule(params.regex || '');
+                break;
+            case 'bankaccount':
+                validationRule = new BankAccountValidationRule();
+                break;
+            case 'creditcard':
+                validationRule = new CreditCardValidationRule();
+                break;
+            case 'zipcode':
+                validationRule = new ZipCodeValidationRule();
+                break;
+            case 'phone':
+                validationRule = new PhoneNumberValidationRule();
+                break;
+            case 'date':
+                validationRule = new DateValidationRule();
+                break;
+            case 'url':
+                validationRule = new UrlValidationRule();
+                break;
+            case 'username':
+                validationRule = new UsernameValidationRule();
+                break;
+            case 'password':
+                validationRule = new PasswordStrengthValidationRule();
+                break;
+            case 'ip':
+                validationRule = new IpAddressValidationRule();
+                break;
+            case 'currency':
+                validationRule = new CurrencyValidationRule();
+                break;
+            case 'ssn':
+                validationRule = new SocialSecurityValidationRule();
                 break;
             default:
                 console.warn(`Unknown validation rule: ${type}`);
