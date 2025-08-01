@@ -20,7 +20,7 @@ npm install oop-validator
 ```
 ## USAGE
 
-```
+```ts
 import { ValidationEngine, RequiredValidationRule, MinValidationRule, MaxValidationRule, EmailValidationRule } from 'oop-validator';
 
 // Define the validation rules
@@ -48,7 +48,7 @@ if (!usernameResult.isValid) {
 
 ## Custom Validation Rule
 
-```
+```ts
 import { IValidationRule } from 'oop-validator';
 
 export class PhoneNumberValidationRule extends IValidationRule {
