@@ -1,5 +1,5 @@
-import ValidationEngine from '../rules/ValidationEngine.ts'
-import IValidationRule from '../rules/IValidationRule.ts'
+import ValidationEngine from '../rules/ValidationEngine'
+import IValidationRule from '../rules/IValidationRule'
 
 export type FieldRules = Array<string | { rule: string, params: any, message?: string } | IValidationRule>
 export type FormConfig = Record<string, FieldRules>

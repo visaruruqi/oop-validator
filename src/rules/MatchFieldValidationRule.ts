@@ -1,4 +1,4 @@
-import IValidationRule from './IValidationRule.ts'
+import IValidationRule from './IValidationRule'
 
 /**
  * Validation rule to ensure a field matches the value of another field.

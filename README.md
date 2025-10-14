@@ -5,6 +5,7 @@ oop-validator is a versatile and robust validation library designed to seamlessl
 ## Key Features
 
 - **Framework-Agnostic**: Designed to work with any UI framework, ensuring maximum flexibility for your projects.
+- **HMR Compatible**: Full compatibility with Vite, Webpack, and other modern development tools with Hot Module Reload.
 - **Extensible**: Easily extend the library with custom validation rules to meet specific application requirements.
 - **Comprehensive Rule Set**: Includes built-in validation rules such as required, minimum and maximum length, email format, domain validation, and more.
 - **Customizable Error Messages**: Configure error messages for each validation rule to provide clear and user-friendly feedback.
@@ -18,6 +19,37 @@ You can install oop-validator via npm:
 ```sh
 npm install oop-validator
 ```
+
+## Development Experience
+
+### Hot Module Reload (HMR) Compatibility
+
+**v0.3.0+** oop-validator is fully compatible with Vite's Hot Module Reload (HMR) and other modern development tools. The library has been optimized to work seamlessly with:
+
+- **Vite + Vue 3** projects
+- **Vite + React** projects  
+- **Webpack** with hot reloading
+- **Other modern bundlers** with HMR support
+
+Previous versions (< 0.3.0) had module resolution issues that could break HMR when importing the library. These issues have been completely resolved by:
+
+- Removing TypeScript file extensions from imports/exports
+- Optimizing module resolution for modern bundlers
+- Externalizing framework dependencies (Vue, React, etc.)
+- Using proper ES module export maps
+
+### Framework Dependencies
+
+The core validation library is **completely framework-agnostic** and works in any environment:
+
+- ✅ **Node.js** - Server-side validation
+- ✅ **React** - Client-side validation  
+- ✅ **Angular** - Any Angular version
+- ✅ **Vanilla JavaScript** - No framework needed
+- ✅ **Vue.js** - Includes optional Vue composable (`useValidation`)
+
+**Vue Dependency**: Vue is only required if you use the `useValidation` composable. All other features work without any framework dependencies.
+
 ## USAGE
 
 ```ts
@@ -180,6 +212,8 @@ function MyForm() {
 These snippets reuse the same rule configuration shown earlier, ensuring consistent validation logic across frameworks.
 =======
 ## Vue Composable Helper
+
+> **Note**: Vue is an optional dependency. This composable is only available when Vue 3 is installed in your project.
 
 For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive.
 

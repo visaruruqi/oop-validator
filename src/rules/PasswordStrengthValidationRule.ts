@@ -1,4 +1,4 @@
-import IValidationRule from './IValidationRule.ts'
+import IValidationRule from './IValidationRule'
 
 export default class PasswordStrengthValidationRule implements IValidationRule {
   private errorMessage = 'Password is too weak.'

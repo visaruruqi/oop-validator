@@ -1,4 +1,4 @@
-import IValidationRule from './IValidationRule.ts'
+import IValidationRule from './IValidationRule'
 
 export default class RegexValidationRule implements IValidationRule {
     private errorMessage: string = 'Field is invalid.'

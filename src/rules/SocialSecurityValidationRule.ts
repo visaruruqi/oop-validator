@@ -1,4 +1,4 @@
-import IValidationRule from './IValidationRule.ts'
+import IValidationRule from './IValidationRule'
 
 export default class SocialSecurityValidationRule implements IValidationRule {
   private errorMessage = 'This field must be a valid SSN.'

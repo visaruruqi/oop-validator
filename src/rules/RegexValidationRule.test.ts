@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import RegexValidationRule from "./RegexValidationRule.ts";
+import RegexValidationRule from "./RegexValidationRule";
 
 describe('MinValidationRule', () => {
     it('should return true for string that matches the given regex', () => {

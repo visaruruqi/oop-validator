@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import ValidationEngine from './ValidationEngine';
 import RequiredValidationRule from './RequiredValidationRule';
-import IValidationRule from "./IValidationRule.ts";
+import IValidationRule from "./IValidationRule";
 
 describe('ValidationEngine', () => {
     it('should validate a single value correctly', () => {
