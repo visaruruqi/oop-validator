@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2025-10-14
+### Improved
+- **Null Safety Optimization**: Refined null safety implementation based on actual runtime requirements:
+  - Removed unnecessary null checks from regex-based validation rules (EmailValidationRule, PhoneNumberValidationRule, etc.)
+  - Kept null safety only where runtime exceptions occur (property access, method calls, constructor calls)
+  - Improved performance by eliminating redundant safety checks
+  - Fixed duplicate code in MatchFieldValidationRule implementation
+
+### Technical
+- Applied precise null safety principle: only guard against operations that throw runtime errors
+- Maintained comprehensive test coverage with 106 passing tests including null safety scenarios
+
 ## [0.3.1] - 2025-10-14
 ### Fixed
 - Fixed `useFormValidation` documentation inaccuracies:
