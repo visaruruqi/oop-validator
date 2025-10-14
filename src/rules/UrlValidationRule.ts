@@ -4,6 +4,11 @@ export default class UrlValidationRule implements IValidationRule {
   private errorMessage = 'This field must be a valid URL.'
 
   isValid(param: string): [boolean, string] {
+    // Safely handle null, undefined, or non-string values
+    if (param == null || typeof param !== 'string') {
+      return [false, this.errorMessage]
+    }
+    
     try {
       const url = new URL(param)
       const isValid = url.protocol === 'http:' || url.protocol === 'https:'

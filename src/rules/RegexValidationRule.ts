@@ -9,6 +9,11 @@ export default class RegexValidationRule implements IValidationRule {
     }
 
     isValid(param: string): [boolean, string] {
+        // Safely handle null, undefined, or non-string values
+        if (param == null || typeof param !== 'string') {
+            return [false, this.errorMessage]
+        }
+        
         // added the check param && param.length because we shouldn't validate the empty string
         const isValid = param && param.length ? new RegExp(this.regexString).test(param) : true
         return [isValid, isValid ? '' : this.errorMessage]

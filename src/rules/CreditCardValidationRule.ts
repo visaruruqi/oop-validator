@@ -19,6 +19,11 @@ export default class CreditCardValidationRule implements IValidationRule {
   }
 
   isValid(param: string): [boolean, string] {
+    // Safely handle null, undefined, or non-string values
+    if (param == null || typeof param !== 'string') {
+      return [false, this.errorMessage]
+    }
+    
     const digits = param.replace(/[^0-9]/g, '')
     const isValid = /^[0-9]{13,19}$/.test(digits) && this.luhnCheck(digits)
     return [isValid, isValid ? '' : this.errorMessage]

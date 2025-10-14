@@ -6,11 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-10-14
+### Fixed
+- Fixed `useFormValidation` documentation inaccuracies:
+  - Corrected `validate` function signature to include optional `values` parameter
+  - Improved `errors` type precision from `Ref<object>` to `Ref<Record<string, string[]>>`
+
+### Improved
+- **JavaScript Developer Experience**: Enhanced README documentation with JavaScript-friendly improvements:
+  - Replaced TypeScript type annotations with plain JavaScript comments
+  - Added meaningful business context to all code examples
+  - Improved code comments explaining validation purposes and return structures
+  - Added practical usage guidance for common scenarios (contact forms, banking, e-commerce)
+  - Made examples more accessible to JavaScript developers without TypeScript knowledge
+
 ## [0.3.0] - 2025-10-14
 ### Fixed
 - **BREAKING**: Resolved Hot Module Reload (HMR) compatibility issues with Vite+Vue3 projects
 - Removed `.ts` extensions from all import/export statements throughout the codebase
 - Fixed module resolution issues that were preventing proper HMR functionality
+- **CRITICAL**: Added null/undefined safety to all validation rules - prevents runtime exceptions when validation methods receive null or undefined parameters
 
 ### Changed
 - Updated TypeScript configuration to disable `allowImportingTsExtensions` for better compatibility
@@ -18,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added source maps for better debugging experience
 - Enhanced package.json with modern ES module export maps
 - Made Vue dependency optional using `peerDependenciesMeta` - Vue is only required when using `useValidation` composable
+
+### Added
+- New `useFormValidation` Vue composable for easier form validation in Vue 3 applications
+- Comprehensive README examples with business-focused use cases (banking, e-commerce, contact forms)
+- JavaScript-friendly comments and documentation
+- Return object structure documentation for better developer experience
+- Extensive null safety test suite with 48 additional tests
 - Externalized Vue from library bundle to prevent dependency conflicts
 
 ### Improved

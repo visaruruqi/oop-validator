@@ -5,6 +5,11 @@ export default class MaxValidationRule implements IValidationRule {
     private errorMessage: string = "";
 
     isValid(param: string): [boolean, string] {
+        // Safely handle null, undefined, or non-string values
+        if (param == null || typeof param !== 'string') {
+            return [false, this.errorMessage || `This field must be no more than ${this.maxLength} characters long.`];
+        }
+        
         const isValid = param.length <= this.maxLength;
         return [isValid, isValid ? "" : this.errorMessage || `This field must be no more than ${this.maxLength} characters long.`];
     }

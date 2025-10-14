@@ -34,6 +34,8 @@ export default class MatchFieldValidationRule implements IValidationRule {
   }
 
   isValid(param: string): [boolean, string] {
+    // MatchFieldValidationRule can handle null/undefined values
+    // as long as both fields have the same value (including null/undefined)
     const otherValue = this.getOtherValue()
     const isValid = param === otherValue
     return [isValid, isValid ? '' : this.errorMessage]
