@@ -23,3 +23,4 @@ export { default as MatchFieldValidationRule } from "./rules/MatchFieldValidatio
 
 // Vue-specific exports (requires Vue to be available)
 export { default as useValidation } from "./vue/useValidation";
+export { default as useFormValidation } from "./vue/useFormValidation";

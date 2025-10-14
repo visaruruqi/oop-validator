@@ -30,7 +30,8 @@ export default class FormValidationEngine {
           withContext.setContext(values)
         }
       })
-      const result = engine.validateValue(values[field])
+      const fieldValue = values[field] !== undefined ? values[field] : ''
+      const result = engine.validateValue(fieldValue)
       fieldErrors[field] = result.errors
       if (!result.isValid) {
         summary.push(...result.errors.map(err => `${field}: ${err}`))

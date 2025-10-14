@@ -211,11 +211,13 @@ function MyForm() {
 
 These snippets reuse the same rule configuration shown earlier, ensuring consistent validation logic across frameworks.
 =======
-## Vue Composable Helper
+## Vue Composable Helpers
 
-> **Note**: Vue is an optional dependency. This composable is only available when Vue 3 is installed in your project.
+> **Note**: Vue is an optional dependency. These composables are only available when Vue 3 is installed in your project.
 
-For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive.
+### Single Field Validation
+
+For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive for individual fields.
 
 ```ts
 import { ref } from 'vue'
@@ -225,4 +227,140 @@ const username = ref('')
 const { errors, isValid } = useValidation(username, ['required', { rule: 'min', params: { length: 3 } }])
 
 // `errors` and `isValid` update automatically when `username` changes
+```
+
+### Form Validation
+
+For complete form validation, use the `useFormValidation` composable that wraps `FormValidationEngine` with Vue reactivity.
+
+```ts
+import { ref } from 'vue'
+import { useFormValidation, MatchFieldValidationRule } from 'oop-validator'
+
+const formData = ref({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const config = {
+  username: ['required', { rule: 'min', params: { length: 3 } }],
+  email: ['required', 'email'],
+  password: ['required', { rule: 'min', params: { length: 8 } }],
+  confirmPassword: [
+    'required',
+    new MatchFieldValidationRule('password')
+  ]
+}
+
+const { 
+  errors,           // Ref<Record<string, string[]>> - All field errors
+  isValid,          // Ref<boolean> - Overall form validity
+  summary,          // Ref<string[]> - All errors as flat list
+  validate,         // Manual validation function
+  getFieldErrors,   // Get errors for specific field
+  isFieldValid      // Check if specific field is valid
+} = useFormValidation(formData, config)
+
+// Get specific field validation
+const usernameErrors = getFieldErrors('username')
+const isEmailValid = isFieldValid('email')
+
+// Manual validation (useful for submit handlers)
+const handleSubmit = () => {
+  const result = validate()
+  if (result.isValid) {
+    // Submit form
+  }
+}
+```
+
+**Key Features:**
+- **Reactive**: Automatically validates when form data changes
+- **Field-specific helpers**: Get validation state for individual fields
+- **Manual validation**: Trigger validation on-demand
+- **Full compatibility**: Uses the same rules as `FormValidationEngine`
+- **Type-safe**: Full TypeScript support with proper typing
+
+### Vue Component Example
+
+```vue
+<template>
+  <form @submit.prevent="handleSubmit">
+    <div>
+      <input 
+        v-model="formData.email" 
+        placeholder="Email"
+        :class="{ error: !isEmailValid.value }"
+      />
+      <span v-if="emailErrors.value.length" class="error">
+        {{ emailErrors.value[0] }}
+      </span>
+    </div>
+    
+    <div>
+      <input 
+        v-model="formData.password" 
+        type="password"
+        placeholder="Password"
+      />
+    </div>
+    
+    <div>
+      <input 
+        v-model="formData.confirmPassword" 
+        type="password"
+        placeholder="Confirm Password"
+      />
+    </div>
+    
+    <button type="submit" :disabled="!isValid">
+      Sign Up
+    </button>
+    
+    <!-- Show summary of all errors -->
+    <ul v-if="summary.length">
+      <li v-for="error in summary" :key="error">{{ error }}</li>
+    </ul>
+  </form>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useFormValidation, MatchFieldValidationRule } from 'oop-validator'
+
+const formData = ref({
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const config = {
+  email: ['required', 'email'],
+  password: ['required', { rule: 'min', params: { length: 8 } }],
+  confirmPassword: ['required', new MatchFieldValidationRule('password')]
+}
+
+const { 
+  errors,
+  isValid, 
+  summary,
+  getFieldErrors,
+  isFieldValid,
+  validate 
+} = useFormValidation(formData, config)
+
+// Field-specific validation state
+const emailErrors = getFieldErrors('email')
+const isEmailValid = isFieldValid('email')
+
+const handleSubmit = () => {
+  const result = validate()
+  if (result.isValid) {
+    console.log('Form is valid!', formData.value)
+    // Submit to API
+  }
+}
+</script>
 ```
