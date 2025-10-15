@@ -44,4 +44,31 @@ export default class FormValidationEngine {
       summary
     }
   }
+
+  /**
+   * Validate a single field
+   * @param fieldName - The name of the field to validate
+   * @param value - The value to validate
+   * @param allValues - All form values (needed for cross-field validation like matchField)
+   * @returns Validation result for the single field
+   */
+  validateField(fieldName: string, value: any, allValues?: Record<string, any>): { isValid: boolean; errors: string[] } {
+    const engine = this.engines[fieldName]
+    
+    if (!engine) {
+      return { isValid: true, errors: [] }
+    }
+
+    // Set context for cross-field validation rules
+    if (allValues) {
+      engine.getRules().forEach(rule => {
+        const withContext = rule as unknown as { setContext?: (v: Record<string, any>) => void }
+        if (withContext.setContext) {
+          withContext.setContext(allValues)
+        }
+      })
+    }
+
+    return engine.validateValue(value)
+  }
 }

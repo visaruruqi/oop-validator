@@ -206,4 +206,150 @@ describe('useFormValidation', () => {
     expect(errors.value.username).toEqual([])
     expect(errors.value.email).toEqual([])
   })
+
+  it('should support "changed" validation strategy for better performance', async () => {
+    const formValues = ref({
+      username: '',
+      email: 'invalid',
+      age: ''
+    })
+
+    const config = {
+      username: ['required'],
+      email: ['required', 'email'],
+      age: ['required']
+    }
+
+    // Use 'changed' strategy - only validates fields that change
+    const { errors, isValid } = useFormValidation(formValues, config, { 
+      validationStrategy: 'changed' 
+    })
+
+    // Initially no errors (not validated yet with 'changed' strategy)
+    expect(isValid.value).toBe(true) // No errors yet
+    expect(errors.value.username || []).toEqual([])
+    expect(errors.value.email || []).toEqual([])
+    expect(errors.value.age || []).toEqual([])
+
+    // Update only username - should only validate username
+    formValues.value.username = 'validuser'
+    await nextTick()
+
+    // Username should be valid now
+    expect(errors.value.username).toEqual([])
+    // Email and age haven't been validated yet (no interaction)
+    expect(errors.value.email || []).toEqual([])
+    expect(errors.value.age || []).toEqual([])
+    expect(isValid.value).toBe(true) // All validated fields are valid
+
+    // Now interact with email (set to invalid value first, then valid)
+    formValues.value.email = 'invalid-email'
+    await nextTick()
+    
+    expect(errors.value.email).toContain('This field must be a valid email address.')
+    expect(isValid.value).toBe(false) // Email is invalid
+
+    // Fix email
+    formValues.value.email = 'valid@example.com'
+    await nextTick()
+
+    expect(errors.value.email).toEqual([])
+    expect(isValid.value).toBe(true) // Email is now valid
+
+    // Interact with age
+    formValues.value.age = '25'
+    await nextTick()
+
+    expect(errors.value.age).toEqual([])
+    expect(isValid.value).toBe(true) // All interacted fields are valid
+  })
+
+  it('should default to "all" validation strategy when no option provided', async () => {
+    const formValues = ref({
+      username: '',
+      email: ''
+    })
+
+    const config = {
+      username: ['required'],
+      email: ['required', 'email']
+    }
+
+    // No options provided - should default to 'all' strategy
+    const { errors, isValid } = useFormValidation(formValues, config)
+
+    expect(isValid.value).toBe(false)
+
+    // Update both fields
+    formValues.value.username = 'testuser'
+    formValues.value.email = 'test@example.com'
+    await nextTick()
+
+    // All fields should be validated
+    expect(isValid.value).toBe(true)
+    expect(errors.value.username).toEqual([])
+    expect(errors.value.email).toEqual([])
+  })
+
+  it('should support validateOnMount option to control initial validation', async () => {
+    const formValues = ref({
+      username: '',
+      email: ''
+    })
+
+    const config = {
+      username: ['required'],
+      email: ['required', 'email']
+    }
+
+    // Use 'all' strategy but disable initial validation
+    const { errors, isValid } = useFormValidation(formValues, config, {
+      validationStrategy: 'all',
+      validateOnMount: false
+    })
+
+    // Should not have errors initially
+    expect(isValid.value).toBe(true)
+    expect(errors.value.username || []).toEqual([])
+
+    // Update a field - should validate ALL fields (because strategy is 'all')
+    formValues.value.username = 'testuser'
+    await nextTick()
+
+    // Now both fields should be validated (all strategy)
+    expect(errors.value.username).toEqual([])
+    expect(errors.value.email).toContain('This field is required.')
+    expect(isValid.value).toBe(false)
+  })
+
+  it('should support validateOnMount: true with "changed" strategy', async () => {
+    const formValues = ref({
+      username: '',
+      email: ''
+    })
+
+    const config = {
+      username: ['required'],
+      email: ['required', 'email']
+    }
+
+    // Use 'changed' strategy but enable initial validation
+    const { errors, isValid } = useFormValidation(formValues, config, {
+      validationStrategy: 'changed',
+      validateOnMount: true
+    })
+
+    // Should have errors initially (validateOnMount: true)
+    expect(isValid.value).toBe(false)
+    expect(errors.value.username).toContain('This field is required.')
+    expect(errors.value.email).toContain('This field is required.')
+
+    // Update only username - should only validate username (changed strategy)
+    formValues.value.username = 'testuser'
+    await nextTick()
+
+    expect(errors.value.username).toEqual([])
+    expect(errors.value.email).toContain('This field is required.') // Still has error
+    expect(isValid.value).toBe(false)
+  })
 })

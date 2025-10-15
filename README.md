@@ -27,7 +27,7 @@ npm install oop-validator
 **v0.3.0+** oop-validator is fully compatible with Vite's Hot Module Reload (HMR) and other modern development tools. The library has been optimized to work seamlessly with:
 
 - **Vite + Vue 3** projects
-- **Vite + React** projects  
+- **Vite + React** projects
 - **Webpack** with hot reloading
 - **Other modern bundlers** with HMR support
 
@@ -43,18 +43,41 @@ Previous versions (< 0.3.0) had module resolution issues that could break HMR wh
 The core validation library is **completely framework-agnostic** and works in any environment:
 
 - ✅ **Node.js** - Server-side validation
-- ✅ **React** - Client-side validation  
+- ✅ **React** - Client-side validation
 - ✅ **Angular** - Any Angular version
 - ✅ **Vanilla JavaScript** - No framework needed
-- ✅ **Vue.js** - Includes optional Vue composable (`useValidation`)
+- ✅ **Vue.js** - Includes optional Vue composables
 
-**Vue Dependency**: Vue is only required if you use the `useValidation` composable. All other features work without any framework dependencies.
+**Vue Dependency**: Vue is only required if you use the Vue composables. All other features work without any framework dependencies.
+
+## Table of Contents
+
+- [Pure JavaScript API](#pure-javascript-api)
+  - [Basic Validation Engine](#basic-validation-engine)
+  - [Form Validation Engine](#form-validation-engine)
+- [Vue.js Composables](#vuejs-composables)
+  - [Validation Configuration Options](#validation-configuration-options)
+- [React Integration](#react-integration)
+  - [React Hook Examples](#react-hook-examples)
+  - [Component Integration](#component-integration)
+- [Node.js Environment](#nodejs-environment)
+  - [Server-side Validation](#server-side-validation)
+  - [API Request Validation](#api-request-validation)
+- [Available Validation Rules](#available-validation-rules)
+- [API Reference](#api-reference)
+
+---
+
+## Pure JavaScript API
+
+The core validation library works in any JavaScript environment without framework dependencies. Perfect for vanilla JavaScript, any framework, or server-side validation.
 
 ## Return Object Structures
 
 All validation methods return consistent, predictable objects to make error handling straightforward:
 
 ### Single Field Validation Result
+
 ```javascript
 // ValidationEngine.validateValue() always returns:
 {
@@ -63,7 +86,8 @@ All validation methods return consistent, predictable objects to make error hand
 }
 ```
 
-### Form Validation Result  
+### Form Validation Result
+
 ```javascript
 // FormValidationEngine.validate() always returns:
 {
@@ -75,11 +99,412 @@ All validation methods return consistent, predictable objects to make error hand
 }
 ```
 
+### Basic Validation Engine
+
+Use `ValidationEngine` for validating individual fields or values. Perfect for real-time field validation, search inputs, or any single-value validation.
+
+```javascript
+import { ValidationEngine } from 'oop-validator';
+
+// Product name validation - ensure it meets business requirements
+const productRules = [
+  'required', // Field must not be empty
+  {
+    rule: 'min',
+    params: { length: 3 },
+    message: 'Product name must be at least 3 characters.',
+  },
+  {
+    rule: 'max',
+    params: { length: 50 },
+    message: 'Product name cannot exceed 50 characters.',
+  },
+];
+
+const productValidation = new ValidationEngine(productRules);
+
+// Validate product name input from user
+const productResult = productValidation.validateValue('Premium Coffee Beans');
+// Returns: { isValid: true, errors: [] }
+
+if (!productResult.isValid) {
+  // Show validation errors to user (e.g., in form field)
+  console.log('Product name errors:', productResult.errors);
+}
+
+// Email validation for contact forms - check format is correct
+const emailValidation = new ValidationEngine(['required', 'email']);
+
+const emailResult = emailValidation.validateValue('user@company.com');
+// Returns: { isValid: true, errors: [] }
+
+// Currency validation for financial applications
+const priceValidation = new ValidationEngine(['required', 'currency']);
+const priceResult = priceValidation.validateValue('$99.99');
+// Returns: { isValid: true, errors: [] }
+```
+
+### Custom Validation Rules
+
+Create your own validation rules for business-specific requirements:
+
+```javascript
+import { IValidationRule } from 'oop-validator'
+
+// Create a custom rule for business-specific validation needs
+export class PhoneNumberValidationRule extends IValidationRule {
+    // Private property to store the error message
+    private errorMessage = "This field must be a valid phone number."
+
+    // Main validation logic - returns [isValid, errorMessage]
+    isValid(param) {
+        // Simple international phone number pattern
+        const phonePattern = /^\+?[1-9]\d{1,14}$/
+        const isValid = phonePattern.test(param)
+        // Return array: [boolean success, string error message]
+        return [isValid, isValid ? "" : this.errorMessage]
+    }
+
+    // Check if this rule handles a specific validation type
+    isMatch(type) {
+        return type.toLowerCase() === 'phone'
+    }
+
+    // Configure rule parameters (not used for phone validation)
+    setParams(params) {
+        // No parameters needed for phone number rule
+    }
+
+    // Allow customizing the error message
+    setErrorMessage(message) {
+        this.errorMessage = message
+    }
+}
+
+// Register and use the custom rule
+const validationEngine = new ValidationEngine(['required', 'phone'])
+validationEngine.addRule(new PhoneNumberValidationRule())
+
+const phoneResult = validationEngine.validateValue('+1234567890')
+if (!phoneResult.isValid) {
+    // Handle phone validation errors in your UI
+    console.log('Phone validation errors:', phoneResult.errors)
+}
+```
+
+### Form Validation Engine
+
+Use `FormValidationEngine` for validating multiple fields at once. Perfect for forms, API requests, or any multi-field validation.
+
+```javascript
+import { FormValidationEngine } from 'oop-validator';
+
+// Sample contact form data (typically from user input)
+const contactForm = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  country: '',
+};
+
+// Define validation rules for each field
+const contactFormEngine = new FormValidationEngine({
+  firstName: ['required', { rule: 'min', params: { length: 2 } }], // Must exist and be at least 2 chars
+  lastName: ['required', { rule: 'min', params: { length: 2 } }], // Must exist and be at least 2 chars
+  email: ['required', 'email'], // Must exist and be valid email format
+  phone: ['required', 'phone'], // Must exist and be valid phone format
+  country: ['required'], // Must exist (not empty)
+});
+
+// Validate the entire form at once
+const contactResult = contactFormEngine.validate(contactForm);
+// contactResult is a plain JavaScript object with this structure:
+// {
+//   isValid: false,        // boolean - true only if ALL fields pass validation
+//   fieldErrors: {         // object with errors grouped by field name (for showing errors per field)
+//     firstName: ["This field is required."],
+//     lastName: ["This field is required."],
+//     email: ["This field is required.", "This field must be a valid email address."],
+//     phone: ["This field is required.", "This field must be a valid phone number."],
+//     country: ["This field is required."]
+//   },
+//   summary: [             // array of ALL error messages with field prefixes (for error summary lists)
+//     "firstName: This field is required.",
+//     "lastName: This field is required.",
+//     "email: This field is required.",
+//     "email: This field must be a valid email address.",
+//     "phone: This field is required.",
+//     "phone: This field must be a valid phone number.",
+//     "country: This field is required."
+//   ]
+// }
+console.log(contactResult.fieldErrors); // Use to show errors next to specific input fields
+console.log(contactResult.summary); // Use to show all errors in an error summary box
+```
+
+### Banking Form Example
+
+```javascript
+import { FormValidationEngine } from 'oop-validator';
+
+const bankingForm = {
+  accountNumber: '',
+  routingNumber: '',
+  accountType: '',
+  currency: '',
+  initialDeposit: '',
+};
+
+const bankingEngine = new FormValidationEngine({
+  accountNumber: ['required', 'bankAccount'],
+  routingNumber: ['required', { rule: 'min', params: { length: 9 } }],
+  accountType: ['required'],
+  currency: ['required', 'currency'],
+  initialDeposit: ['required', { rule: 'min', params: { amount: 25 } }],
+});
+
+const bankingResult = bankingEngine.validate(bankingForm);
+```
+
+---
+
+## Vue.js Composables
+
+The library includes optional Vue.js composables that provide reactive validation with automatic updates when your form data changes. Perfect for Vue 3 Composition API projects.
+
+**Installation for Vue projects:**
+
+```bash
+npm install oop-validator vue
+```
+
+### useValidation - Single Field Validation
+
+The `useValidation` composable is perfect for validating individual form fields with real-time reactive feedback.
+
+```javascript
+import { ref } from 'vue';
+import { useValidation } from 'oop-validator';
+
+// Single field validation with automatic reactivity
+const email = ref('');
+
+// Setup validation rules
+const emailRules = ['required', 'email'];
+
+// Get reactive validation state
+const { errors, isValid, validate } = useValidation(email, emailRules);
+
+// Validation runs automatically when email.value changes
+// errors.value will contain array of error messages
+// isValid.value will be true/false
+
+// You can also manually trigger validation
+const manualCheck = () => {
+  validate(email.value);
+};
+```
+
+**Usage in Vue component:**
+
+```vue
+<template>
+  <div class="field">
+    <input
+      v-model="email"
+      type="email"
+      placeholder="Enter your email"
+      :class="{ error: !isValid }"
+    />
+    <span v-if="errors.length" class="error-message">
+      {{ errors[0] }}
+    </span>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useValidation } from 'oop-validator';
+
+const email = ref('');
+const { errors, isValid } = useValidation(email, ['required', 'email']);
+</script>
+```
+
+### useFormValidation - Multi-Field Form Validation
+
+The `useFormValidation` composable handles complex forms with multiple fields and provides comprehensive error management.
+
+```javascript
+import { ref } from 'vue';
+import { useFormValidation } from 'oop-validator';
+
+// Form data
+const formData = ref({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+});
+
+// Validation configuration
+const validationConfig = {
+  firstName: ['required', { rule: 'min', params: { length: 2 } }],
+  lastName: ['required', { rule: 'min', params: { length: 2 } }],
+  email: ['required', 'email'],
+  phone: ['required', 'phone'],
+};
+
+// Get reactive validation state
+const {
+  errors, // Reactive object with errors per field
+  isValid, // Reactive boolean - true when ALL fields valid
+  summary, // Reactive array of all errors
+  validate, // Manual validation function
+  getFieldErrors, // Get errors for specific field
+  isFieldValid, // Check if specific field is valid
+} = useFormValidation(formData, validationConfig);
+
+// Field-specific helpers
+const emailErrors = getFieldErrors('email'); // Reactive ref with email errors
+const isEmailValid = isFieldValid('email'); // Reactive ref with email validity
+
+// Handle form submission
+const handleSubmit = () => {
+  const result = validate();
+  if (result.isValid) {
+    console.log('Form is valid, submitting...', formData.value);
+  }
+};
+```
+
+**Full Vue component example:**
+
+```vue
+<template>
+  <form @submit.prevent="handleSubmit">
+    <div class="field">
+      <input
+        v-model="formData.firstName"
+        placeholder="First Name"
+        :class="{ error: !isFieldValid('firstName').value }"
+      />
+      <span
+        v-if="getFieldErrors('firstName').value.length"
+        class="error-message"
+      >
+        {{ getFieldErrors('firstName').value[0] }}
+      </span>
+    </div>
+
+    <div class="field">
+      <input
+        v-model="formData.email"
+        type="email"
+        placeholder="Email"
+        :class="{ error: !isFieldValid('email').value }"
+      />
+      <span v-if="getFieldErrors('email').value.length" class="error-message">
+        {{ getFieldErrors('email').value[0] }}
+      </span>
+    </div>
+
+    <button type="submit" :disabled="!isValid">Submit Form</button>
+
+    <!-- Show all validation errors -->
+    <div v-if="summary.length" class="error-summary">
+      <p v-for="error in summary" :key="error">{{ error }}</p>
+    </div>
+  </form>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useFormValidation } from 'oop-validator';
+
+const formData = ref({
+  firstName: '',
+  email: '',
+});
+
+const config = {
+  firstName: ['required'],
+  email: ['required', 'email'],
+};
+
+const { errors, isValid, summary, validate, getFieldErrors, isFieldValid } =
+  useFormValidation(formData, config);
+
+const handleSubmit = () => {
+  const result = validate();
+  if (result.isValid) {
+    console.log('Submitting:', formData.value);
+  }
+};
+</script>
+```
+
+### Validation Configuration Options
+
+The `useFormValidation` composable accepts an optional third parameter for configuration:
+
+```javascript
+const { errors, isValid } = useFormValidation(formData, config, {
+  validationStrategy: 'all' | 'changed',  // How to validate (default: 'all')
+  validateOnMount: true | false            // Validate immediately (default: depends on strategy)
+})
+```
+
+#### Validation Strategies
+
+**`validationStrategy: 'all'`** (default)
+- Validates **all fields** whenever any field changes
+- Safest option for forms with cross-field validation (like password confirmation)
+- Default behavior - ensures consistency
+
+**`validationStrategy: 'changed'`**
+- Only validates **fields that changed** for better performance
+- Ideal for large forms or real-time validation scenarios
+- May miss cross-field validation dependencies
+
+#### Validate On Mount
+
+**`validateOnMount: boolean`**
+- Controls whether validation runs immediately when the form loads
+- **Default for 'all' strategy**: `true` (show all errors immediately)
+- **Default for 'changed' strategy**: `false` (wait for user interaction)
+
+#### Configuration Examples
+
+```javascript
+// Default: validate all fields immediately
+const { errors, isValid } = useFormValidation(formData, config)
+
+// Performance mode: only validate changed fields, no initial errors
+const { errors, isValid } = useFormValidation(formData, config, {
+  validationStrategy: 'changed'
+})
+
+// Validate all fields, but wait for user interaction
+const { errors, isValid } = useFormValidation(formData, config, {
+  validationStrategy: 'all',
+  validateOnMount: false
+})
+
+// Show all errors immediately, but only revalidate changed fields
+const { errors, isValid } = useFormValidation(formData, config, {
+  validationStrategy: 'changed',
+  validateOnMount: true
+})
+```
+
 ### Vue Composable Returns
+
 ```javascript
 // useValidation() returns reactive Vue refs:
 {
-  errors: /* Vue ref containing array */ string[],         // reactive array of error messages  
+  errors: /* Vue ref containing array */ string[],         // reactive array of error messages
   isValid: /* Vue ref containing boolean */ boolean,       // reactive validation status
   validate: (value?) => boolean  // manual validation function
 }
@@ -95,643 +520,331 @@ All validation methods return consistent, predictable objects to make error hand
 }
 ```
 
-## USAGE
+---
 
-### Basic Single Field Validation
+## React Integration
 
-```js
+The core validation engines work perfectly with React's state management. Here are practical examples for different React patterns.
+
+### React Hook Examples
+
+```javascript
+import { useEffect, useState } from 'react';
+import { FormValidationEngine } from 'oop-validator';
+
+// Contact form with React hooks
+function ContactForm() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  });
+  const [errors, setErrors] = useState({});
+  const [isValid, setIsValid] = useState(false);
+
+  // Create validation engine
+  const contactEngine = new FormValidationEngine({
+    firstName: ['required', { rule: 'min', params: { length: 2 } }],
+    lastName: ['required', { rule: 'min', params: { length: 2 } }],
+    email: ['required', 'email'],
+    phone: ['required', 'phone'],
+  });
+
+  // Validate on form data changes
+  useEffect(() => {
+    const result = contactEngine.validate(formData);
+    setErrors(result.fieldErrors);
+    setIsValid(result.isValid);
+  }, [formData]);
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isValid) {
+      console.log('Submitting form:', formData);
+      // API call or further processing
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <input
+          type="text"
+          placeholder="First Name"
+          value={formData.firstName}
+          onChange={(e) => handleInputChange('firstName', e.target.value)}
+          className={errors.firstName?.length ? 'error' : ''}
+        />
+        {errors.firstName?.map((error, index) => (
+          <span key={index} className="error-message">
+            {error}
+          </span>
+        ))}
+      </div>
+
+      <div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          className={errors.email?.length ? 'error' : ''}
+        />
+        {errors.email?.map((error, index) => (
+          <span key={index} className="error-message">
+            {error}
+          </span>
+        ))}
+      </div>
+
+      <button type="submit" disabled={!isValid}>
+        Submit Contact Form
+      </button>
+    </form>
+  );
+}
+```
+
+### Component Integration
+
+```javascript
+import { useEffect, useState } from 'react';
 import { ValidationEngine } from 'oop-validator';
 
-// Product name validation - ensure it meets business requirements
-const productRules = [
-    'required',  // Field must not be empty
-    { rule: 'min', params: { length: 3 }, message: "Product name must be at least 3 characters." },
-    { rule: 'max', params: { length: 50 }, message: "Product name cannot exceed 50 characters." }
-];
+// Single field validation component
+function ValidatedInput({ value, onChange, rules, placeholder }) {
+  const [errors, setErrors] = useState([]);
+  const validationEngine = new ValidationEngine(rules);
 
-const productValidation = new ValidationEngine(productRules);
+  useEffect(() => {
+    const result = validationEngine.validateValue(value);
+    setErrors(result.errors);
+  }, [value]);
 
-// Validate product name input from user
-const productResult = productValidation.validateValue('Premium Coffee Beans');
-// productResult is a plain JavaScript object with this structure:
-// {
-//   isValid: true,     // boolean - true if ALL rules passed
-//   errors: []         // array of strings - validation error messages (empty when valid)
-// }
-if (!productResult.isValid) {
-    // Show validation errors to user (e.g., in form field)
-    console.log('Product name errors:', productResult.errors);
+  return (
+    <div className="field">
+      <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={errors.length ? 'error' : ''}
+      />
+      {errors.map((error, index) => (
+        <span key={index} className="error-message">
+          {error}
+        </span>
+      ))}
+    </div>
+  );
 }
 
-// Email validation for contact forms - check format is correct
-const emailValidation = new ValidationEngine(['required', 'email']);
-const emailResult = emailValidation.validateValue('contact@business.com');
-// emailResult example when INVALID:
-// {
-//   isValid: false,
-//   errors: ["This field is required.", "This field must be a valid email address."]
-// }
-if (!emailResult.isValid) {
-    // Display these errors next to the email input field
-    console.log('Email validation errors:', emailResult.errors);
-}
-
-// Currency validation for pricing - ensure proper money format
-const priceValidation = new ValidationEngine(['required', 'currency']);
-const priceResult = priceValidation.validateValue('$299.99');
-// priceResult example when VALID:
-// {
-//   isValid: true,    // All validation rules passed
-//   errors: []        // No errors found
-// }
-if (!priceResult.isValid) {
-    // Show price format errors to user
-    console.log('Price validation errors:', priceResult.errors);
-}
-```
-
-## Custom Validation Rule
-
-```js
-import { IValidationRule } from 'oop-validator';
-
-// Create a custom rule for business-specific validation needs
-export class PhoneNumberValidationRule extends IValidationRule {
-    // Private property to store the error message
-    private errorMessage = "This field must be a valid phone number.";
-
-    // Main validation logic - returns [isValid, errorMessage]
-    isValid(param) {
-        // Simple international phone number pattern
-        const phonePattern = /^\+?[1-9]\d{1,14}$/;
-        const isValid = phonePattern.test(param);
-        // Return array: [boolean success, string error message]
-        return [isValid, isValid ? "" : this.errorMessage];
-    }
-
-    // Check if this rule handles a specific validation type
-    isMatch(type) {
-        return type.toLowerCase() === 'phone';
-    }
-
-    // Configure rule parameters (not used for phone validation)
-    setParams(params) {
-        // No parameters needed for phone number rule
-    }
-
-    // Allow customizing the error message
-    setErrorMessage(message) {
-        this.errorMessage = message;
-    }
-}
-
-// Register and use the custom rule
-const validationEngine = new ValidationEngine(['required', 'phone']);
-validationEngine.addRule(new PhoneNumberValidationRule());
-
-const phoneResult = validationEngine.validateValue('+1234567890');
-if (!phoneResult.isValid) {
-    // Handle phone validation errors in your UI
-    console.log('Phone validation errors:', phoneResult.errors);
-}
-```
-
-## Form Validation Examples
-
-The `FormValidationEngine` helps validate multiple fields at once and collect a summary of problems. Each field uses the same rules that `ValidationEngine` understands. Perfect for contact forms, registration, checkout processes, etc.
-
-### Contact Form Validation
-
-```js
-import { FormValidationEngine } from 'oop-validator'
-
-// Sample contact form data (typically from user input)
-const contactForm = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  country: ''
-}
-
-// Define validation rules for each field
-const contactFormEngine = new FormValidationEngine({
-  firstName: ['required', { rule: 'min', params: { length: 2 } }],  // Must exist and be at least 2 chars
-  lastName: ['required', { rule: 'min', params: { length: 2 } }],   // Must exist and be at least 2 chars
-  email: ['required', 'email'],      // Must exist and be valid email format
-  phone: ['required', 'phone'],      // Must exist and be valid phone format
-  country: ['required']              // Must exist (not empty)
-})
-
-// Validate the entire form at once
-const contactResult = contactFormEngine.validate(contactForm)
-// contactResult is a plain JavaScript object with this structure:
-// {
-//   isValid: false,        // boolean - true only if ALL fields pass validation
-//   fieldErrors: {         // object with errors grouped by field name (for showing errors per field)
-//     firstName: ["This field is required."],
-//     lastName: ["This field is required."], 
-//     email: ["This field is required.", "This field must be a valid email address."],
-//     phone: ["This field is required.", "This field must be a valid phone number."],
-//     country: ["This field is required."]
-//   },
-//   summary: [             // array of ALL error messages with field prefixes (for error summary lists)
-//     "firstName: This field is required.",
-//     "lastName: This field is required.",
-//     "email: This field is required.",
-//     "email: This field must be a valid email address.",
-//     "phone: This field is required.",
-//     "phone: This field must be a valid phone number.",
-//     "country: This field is required."
-//   ]
-// }
-console.log(contactResult.fieldErrors) // Use to show errors next to specific input fields
-console.log(contactResult.summary)     // Use to show all errors in an error summary box
-```
-
-### Banking Form Validation
-
-```js
-import { FormValidationEngine } from 'oop-validator'
-
-// Sample banking form data (from user input fields)
-const bankingForm = {
-  accountNumber: '',
-  routingNumber: '',
-  accountType: '',
-  currency: '',
-  initialDeposit: ''
-}
-
-const bankingEngine = new FormValidationEngine({
-  accountNumber: ['required', 'bankAccount'],
-  routingNumber: ['required', { rule: 'min', params: { length: 9 } }],
-  accountType: ['required'],
-  currency: ['required', 'currency'],
-  initialDeposit: ['required', { rule: 'min', params: { amount: 25 } }]
-})
-
-const bankingResult = bankingEngine.validate(bankingForm)
-```
-
-### E-commerce Product Form
-
-```ts
-import { FormValidationEngine } from 'oop-validator'
-
-const productForm = {
-  productName: '',
-  sku: '',
-  price: '',
-  website: '',
-  description: ''
-}
-
-const productEngine = new FormValidationEngine({
-  productName: ['required', { rule: 'min', params: { length: 3 } }],
-  sku: ['required', { rule: 'regex', params: { pattern: /^[A-Z0-9-]+$/ } }],
-  price: ['required', 'currency'],
-  website: ['url'],
-  description: [{ rule: 'max', params: { length: 500 } }]
-})
-
-const productResult = productEngine.validate(productForm)
-```
-
-### Address/Shipping Form
-
-```ts
-import { FormValidationEngine } from 'oop-validator'
-
-const shippingForm = {
-  streetAddress: '',
-  city: '',
-  state: '',
-  zipCode: '',
-  country: ''
-}
-
-const shippingEngine = new FormValidationEngine({
-  streetAddress: ['required'],
-  city: ['required'],
-  state: ['required'],
-  zipCode: ['required', 'zipCode'],
-  country: ['required']
-})
-
-const shippingResult = shippingEngine.validate(shippingForm)
-```
-
-### Event Registration Form
-
-```ts
-import { FormValidationEngine } from 'oop-validator'
-
-const eventForm = {
-  attendeeName: '',
-  email: '',
-  eventDate: '',
-  ticketQuantity: '',
-  specialRequests: ''
-}
-
-const eventEngine = new FormValidationEngine({
-  attendeeName: ['required'],
-  email: ['required', 'email'],
-  eventDate: ['required', 'date'],
-  ticketQuantity: ['required', { rule: 'min', params: { value: 1 } }],
-  specialRequests: [{ rule: 'max', params: { length: 200 } }]
-})
-
-const eventResult = eventEngine.validate(eventForm)
-```
-
-Custom rules like `MatchFieldValidationRule` can access other fields by name or via a callback, making dependent validations straightforward.
-
-## Reactive Framework Integration
-
-`FormValidationEngine` works well inside reactive workflows. Invoke `validate` whenever the form state changes so error information stays current.
-
-### Vue Example - Contact Form
-
-```ts
-import { reactive, watch } from 'vue'
-import { FormValidationEngine } from 'oop-validator'
-
-const contactEngine = new FormValidationEngine({
-  firstName: ['required', { rule: 'min', params: { length: 2 } }],
-  lastName: ['required', { rule: 'min', params: { length: 2 } }],
-  email: ['required', 'email'],
-  phone: ['required', 'phone']
-})
-
-const contactState = reactive({
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  errors: {}
-})
-
-watch(contactState, (current) => {
-  const result = contactEngine.validate(current)
-  contactState.errors = result.fieldErrors
-}, { deep: true })
-```
-
-### React Example - Product Form
-
-```tsx
-import { useEffect, useState } from 'react'
-import { FormValidationEngine } from 'oop-validator'
-
-const productEngine = new FormValidationEngine({
-  productName: ['required', { rule: 'min', params: { length: 3 } }],
-  sku: ['required'],
-  price: ['required', 'currency'],
-  website: ['url']
-})
-
+// Usage in parent component
 function ProductForm() {
-  const [productData, setProductData] = useState({
-    productName: '',
-    sku: '',
-    price: '',
-    website: ''
-  })
-  const [errors, setErrors] = useState({})
+  const [productName, setProductName] = useState('');
+  const [price, setPrice] = useState('');
 
-  useEffect(() => {
-    const result = productEngine.validate(productData)
-    setErrors(result.fieldErrors)
-  }, [productData])
+  return (
+    <form>
+      <ValidatedInput
+        value={productName}
+        onChange={(e) => setProductName(e.target.value)}
+        rules={['required', { rule: 'min', params: { length: 3 } }]}
+        placeholder="Product Name"
+      />
 
-  // render ...
+      <ValidatedInput
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        rules={['required', 'currency']}
+        placeholder="Price"
+      />
+    </form>
+  );
 }
 ```
 
-### Angular Example - Banking Form
+---
 
-```ts
-import { Component } from '@angular/core'
-import { FormValidationEngine } from 'oop-validator'
+## Node.js Environment
 
-@Component({
-  selector: 'app-banking-form',
-  template: '...'
-})
-export class BankingFormComponent {
-  private bankingEngine = new FormValidationEngine({
-    accountNumber: ['required', 'bankAccount'],
-    routingNumber: ['required', { rule: 'min', params: { length: 9 } }],
-    accountType: ['required'],
-    currency: ['required', 'currency']
-  })
+The validation library is perfect for server-side validation in Node.js applications, API request validation, and data processing.
 
-  bankingData = {
-    accountNumber: '',
-    routingNumber: '',
-    accountType: '',
-    currency: ''
+### Server-side Validation
+
+```javascript
+const { FormValidationEngine, ValidationEngine } = require('oop-validator');
+
+// Express.js middleware for request validation
+function validateContactForm(req, res, next) {
+  const contactEngine = new FormValidationEngine({
+    firstName: ['required', { rule: 'min', params: { length: 2 } }],
+    lastName: ['required', { rule: 'min', params: { length: 2 } }],
+    email: ['required', 'email'],
+    phone: ['required', 'phone'],
+    message: ['required', { rule: 'max', params: { length: 1000 } }],
+  });
+
+  const result = contactEngine.validate(req.body);
+
+  if (!result.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: result.fieldErrors,
+      summary: result.summary,
+    });
   }
 
-  errors: any = {}
+  next(); // Validation passed, continue to next middleware
+}
 
-  onFormChange() {
-    const result = this.bankingEngine.validate(this.bankingData)
-    this.errors = result.fieldErrors
+// Use in Express routes
+app.post('/api/contact', validateContactForm, (req, res) => {
+  // Process validated contact form data
+  console.log('Valid contact form:', req.body);
+  res.json({ success: true, message: 'Contact form submitted successfully' });
+});
+```
+
+### API Request Validation
+
+```javascript
+const { FormValidationEngine } = require('oop-validator');
+
+// User registration validation
+function validateUserRegistration(userData) {
+  const userEngine = new FormValidationEngine({
+    username: ['required', 'username'],
+    email: ['required', 'email'],
+    password: ['required', 'passwordStrength'],
+    confirmPassword: [
+      'required',
+      {
+        rule: 'matchField',
+        params: { fieldName: 'password' },
+      },
+    ],
+    age: ['required', { rule: 'min', params: { value: 18 } }],
+  });
+
+  return userEngine.validate(userData);
+}
+
+// Product validation for e-commerce API
+function validateProduct(productData) {
+  const productEngine = new FormValidationEngine({
+    name: ['required', { rule: 'min', params: { length: 3 } }],
+    sku: ['required', { rule: 'regex', params: { pattern: /^[A-Z0-9-]+$/ } }],
+    price: ['required', 'currency'],
+    category: ['required'],
+    description: [{ rule: 'max', params: { length: 2000 } }],
+    tags: [{ rule: 'max', params: { length: 10 } }], // Max 10 tags
+  });
+
+  return productEngine.validate(productData);
+}
+
+// Usage in API handlers
+async function createProduct(req, res) {
+  const validationResult = validateProduct(req.body);
+
+  if (!validationResult.isValid) {
+    return res.status(400).json({
+      error: 'Invalid product data',
+      validation_errors: validationResult.fieldErrors,
+    });
+  }
+
+  try {
+    // Save to database
+    const product = await Product.create(req.body);
+    res.status(201).json({ success: true, product });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
   }
 }
-  confirmPassword: [
-    'required',
-    new MatchFieldValidationRule('password')
-  ]
-})
 
-const state = reactive({
-  username: '',
-  password: '',
-  confirmPassword: '',
-  errors: {}
-})
+// Database model validation
+class User {
+  static validate(userData) {
+    const userEngine = new FormValidationEngine({
+      email: ['required', 'email'],
+      firstName: ['required'],
+      lastName: ['required'],
+      dateOfBirth: ['required', 'date'],
+      socialSecurity: ['socialSecurity'], // Optional field
+    });
 
-watch(state, (current) => {
-  const result = formEngine.validate(current)
-  state.errors = result.fieldErrors
-}, { deep: true })
-```
+    return userEngine.validate(userData);
+  }
 
-### React example
+  static async create(userData) {
+    const validation = User.validate(userData);
 
-```tsx
-import { useEffect, useState } from 'react'
-import { FormValidationEngine, MatchFieldValidationRule } from 'oop-validator'
+    if (!validation.isValid) {
+      throw new Error(
+        `User validation failed: ${validation.summary.join(', ')}`
+      );
+    }
 
-const formEngine = new FormValidationEngine({
-  username: ['required'],
-  password: ['required', { rule: 'min', params: { length: 8 } }],
-  confirmPassword: [
-    'required',
-    new MatchFieldValidationRule('password')
-  ]
-})
-
-function MyForm() {
-  const [values, setValues] = useState({
-    username: '',
-    password: '',
-    confirmPassword: ''
-  })
-  const [errors, setErrors] = useState({})
-
-  useEffect(() => {
-    const result = formEngine.validate(values)
-    setErrors(result.fieldErrors)
-  }, [values])
-
-  // render ...
-}
-```
-
-These snippets reuse the same rule configuration shown earlier, ensuring consistent validation logic across frameworks.
-=======
-## Vue Composable Helpers
-
-> **Note**: Vue is an optional dependency. These composables are only available when Vue 3 is installed in your project.
-
-### Single Field Validation
-
-For projects using Vue's Composition API, the `useValidation` composable keeps validation state reactive for individual fields.
-
-```ts
-import { ref } from 'vue'
-import { useValidation } from 'oop-validator'
-
-// Product name validation
-const productName = ref('')
-// useValidation returns an object with reactive properties:
-// {
-//   errors: ref([]),       // Vue ref containing array of error messages
-//   isValid: ref(true),    // Vue ref containing validation status boolean
-//   validate: function()   // Function to manually trigger validation
-// }
-const { errors, isValid } = useValidation(productName, [
-  'required', 
-  { rule: 'min', params: { length: 3 } }
-])
-
-// Email validation  
-const contactEmail = ref('')
-// Using destructuring with renaming to avoid variable name conflicts
-const { errors: emailErrors, isValid: isEmailValid } = useValidation(contactEmail, [
-  'required', 
-  'email'
-])
-
-// Currency validation
-const productPrice = ref('')
-// Each useValidation call returns its own independent validation state
-const { errors: priceErrors, isValid: isPriceValid } = useValidation(productPrice, [
-  'required', 
-  'currency'
-])
-
-// All validation states update automatically when input values change
-// Example: when productName.value = 'ab', errors.value = ["Minimum length is 3 characters."]
-```
-
-### Form Validation
-
-For complete form validation, use the `useFormValidation` composable that wraps `FormValidationEngine` with Vue reactivity.
-
-#### Contact Form Example
-
-```ts
-import { ref } from 'vue'
-import { useFormValidation } from 'oop-validator'
-
-// Create reactive form data (automatically validates when data changes)
-const contactForm = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  country: ''
-})
-
-// Define validation rules for each field (same as FormValidationEngine)
-const contactConfig = {
-  firstName: ['required', { rule: 'min', params: { length: 2 } }],  // Required + min 2 chars
-  lastName: ['required', { rule: 'min', params: { length: 2 } }],   // Required + min 2 chars
-  email: ['required', 'email'],      // Required + valid email format
-  phone: ['required', 'phone'],      // Required + valid phone format
-  country: ['required']              // Required (not empty)
-}
-
-// useFormValidation returns an object with these reactive properties and functions:
-// {
-//   errors: ref({          // Vue ref containing object with errors by field
-//     firstName: [],       // Array of error messages for this field
-//     lastName: [],
-//     email: ["This field must be a valid email address."],
-//     phone: [],
-//     country: []
-//   }),
-//   isValid: ref(false),   // Vue ref - true only when ALL fields are valid
-//   summary: ref([]),      // Vue ref containing flat array of all errors
-//   validate: function(),  // Function that returns full validation result object
-//   getFieldErrors: function(fieldName),  // Function returning Vue ref with field errors
-//   isFieldValid: function(fieldName)     // Function returning Vue ref with field validity
-// }
-const { 
-  errors,           // Reactive object containing validation errors for each field
-  isValid,          // Reactive boolean indicating if the entire form is valid
-  summary,          // Reactive array of all validation error messages
-  validate,         // Function to manually trigger validation
-  getFieldErrors,   // Function to get reactive validation errors for a specific field
-  isFieldValid      // Function to check if a specific field is valid (returns reactive boolean)
-} = useFormValidation(contactForm, contactConfig)
-
-// Helper functions for working with individual field validation in your Vue template
-const firstNameErrors = getFieldErrors('firstName')  // Returns Vue ref with array: ref(["This field is required."])
-const isEmailValid = isFieldValid('email')           // Returns Vue ref with boolean: ref(false)
-```
-
-#### Banking Form Example
-
-```js
-import { ref } from 'vue'
-import { useFormValidation } from 'oop-validator'
-
-// Reactive banking form data (updates trigger automatic validation)
-const bankingForm = ref({
-  accountNumber: '',
-  routingNumber: '',
-  accountType: '',
-  currency: '',
-  initialDeposit: ''
-})
-
-// Validation rules for banking requirements
-const bankingConfig = {
-  accountNumber: ['required', 'bankAccount'],    // Required + valid bank account format
-  routingNumber: ['required', { rule: 'min', params: { length: 9 } }],  // Required + min 9 digits
-  accountType: ['required'],                     // Required field
-  currency: ['required', 'currency'],           // Required + valid currency format
-  initialDeposit: ['required', { rule: 'min', params: { amount: 25 } }]  // Required + min $25
-}
-
-// Get reactive validation state and functions
-const { errors, isValid, validate } = useFormValidation(bankingForm, bankingConfig)
-
-// validate() returns the same structure as FormValidationEngine.validate():
-// {
-//   isValid: boolean,      // true if all fields pass validation
-//   fieldErrors: {         // object with arrays of errors per field
-//     accountNumber: ["This field is required."],
-//     routingNumber: [],
-//     accountType: ["This field is required."],
-//     currency: [],
-//     initialDeposit: ["This field is required."]
-//   },
-//   summary: [             // flat array of all errors with field names
-//     "accountNumber: This field is required.",
-//     "accountType: This field is required.",
-//     "initialDeposit: This field is required."
-//   ]
-// }
-const handleSubmit = () => {
-  const result = validate()  // Manual validation trigger
-  if (result.isValid) {
-    // All fields passed validation - safe to submit
-    console.log('Banking form is valid, processing...')
-  } else {
-    // Show validation errors to user
-    console.log('Form has errors:', result.summary)
+    // Proceed with user creation
+    return await database.users.insert(userData);
   }
 }
 ```
 
-#### E-commerce Product Form Example
-
-```js
-import { ref } from 'vue'
-import { useFormValidation } from 'oop-validator'
-
-// Reactive product form data (automatically validates on changes)
-const productForm = ref({
-  productName: '',
-  sku: '',
-  price: '',
-  website: '',
-  description: ''
-})
-
-// Validation rules for product data requirements
-const productConfig = {
-  productName: ['required', { rule: 'min', params: { length: 3 } }],  // Required + min 3 chars
-  sku: ['required', { rule: 'regex', params: { pattern: /^[A-Z0-9-]+$/ } }],  // Required + uppercase alphanumeric with dashes
-  price: ['required', 'currency'],      // Required + valid currency format ($99.99)
-  website: ['url'],                     // Optional but must be valid URL if provided
-  description: [{ rule: 'max', params: { length: 500 } }]  // Optional but max 500 chars if provided
-}
-
-// Get reactive validation state and helper functions
-const { errors, isValid, getFieldErrors, isFieldValid } = useFormValidation(productForm, productConfig)
-
-// Helper functions for individual field validation in your Vue template
-const productNameErrors = getFieldErrors('productName')  // Returns reactive array of error messages for product name
-const isPriceValid = isFieldValid('price')               // Returns reactive boolean for price field validity
-
-// Use in Vue template:
-// <input v-model="productForm.productName" :class="{ error: !isPriceValid.value }" />
-// <div v-for="error in productNameErrors.value">{{ error }}</div>
-```
-
-**Key Features:**
-- **Reactive**: Automatically validates when form data changes
-- **Field-specific helpers**: Get validation state for individual fields  
-- **Manual validation**: Trigger validation on-demand with `validate()` function
-- **Full compatibility**: Uses the same rules as `FormValidationEngine`
-- **JavaScript/TypeScript friendly**: Works with or without TypeScript
+---
 
 ## Available Validation Rules
 
 The library includes a comprehensive set of built-in validation rules for common business needs:
 
 ### Basic Rules
+
 - **`required`** - Field must not be empty
 - **`min`** - Minimum length or value: `{ rule: 'min', params: { length: 3 } }`
 - **`max`** - Maximum length or value: `{ rule: 'max', params: { length: 50 } }`
 
 ### Format Rules
+
 - **`email`** - Valid email address format
 - **`url`** - Valid URL format
 - **`phone`** - Valid phone number format
 - **`date`** - Valid date format
 
 ### Financial Rules
+
 - **`currency`** - Valid currency format ($123.45, €99.00, etc.)
 - **`bankAccount`** - Valid bank account number
 - **`creditCard`** - Valid credit card number
 
 ### Geographic Rules
+
 - **`zipCode`** - Valid ZIP/postal code
 - **`domain`** - Valid domain name
 - **`ipAddress`** - Valid IP address
 
 ### Identity Rules
+
 - **`socialSecurity`** - Valid social security number
 - **`username`** - Valid username format
 
 ### Advanced Rules
+
 - **`regex`** - Custom regex pattern: `{ rule: 'regex', params: { pattern: /^[A-Z]+$/ } }`
 - **`passwordStrength`** - Password strength validation
 - **`MatchFieldValidationRule`** - Cross-field validation (matches another field)
 
 ### Custom Messages
+
 All rules support custom error messages:
-```ts
+
+```javascript
 {
   rule: 'min',
   params: { length: 8 },
@@ -739,3 +852,109 @@ All rules support custom error messages:
 }
 ```
 
+---
+
+## API Reference
+
+### ValidationEngine
+
+**Constructor:**
+
+```javascript
+new ValidationEngine(rules: Array<string | RuleConfig>)
+```
+
+**Methods:**
+
+- `validateValue(value: string): ValidationResult` - Validates a single value
+- `addRule(rule: IValidationRule): void` - Adds a custom validation rule
+
+**Return Type:**
+
+```javascript
+{
+  isValid: boolean,
+  errors: string[]
+}
+```
+
+### FormValidationEngine
+
+**Constructor:**
+
+```javascript
+new FormValidationEngine(config: { [fieldName: string]: Array<string | RuleConfig> })
+```
+
+**Methods:**
+
+- `validate(data: object): FormValidationResult` - Validates all form fields
+
+**Return Type:**
+
+```javascript
+{
+  isValid: boolean,
+  fieldErrors: { [fieldName: string]: string[] },
+  summary: string[]
+}
+```
+
+### Vue Composables
+
+#### useValidation
+
+```javascript
+useValidation(
+  value: Ref<string>,
+  rules: Array<string | RuleConfig>
+): {
+  errors: Ref<string[]>,
+  isValid: Ref<boolean>,
+  validate: (value?: string) => boolean
+}
+```
+
+#### useFormValidation
+
+```javascript
+useFormValidation(
+  formData: Ref<object>,
+  config: { [fieldName: string]: Array<string | RuleConfig> },
+  options?: {
+    validationStrategy?: 'all' | 'changed',  // default: 'all'
+    validateOnMount?: boolean                 // default: true for 'all', false for 'changed'
+  }
+): {
+  errors: Ref<{ [fieldName: string]: string[] }>,
+  isValid: Ref<boolean>,
+  summary: Ref<string[]>,
+  validate: (values?: object) => FormValidationResult,
+  getFieldErrors: (field: string) => Ref<string[]>,
+  isFieldValid: (field: string) => Ref<boolean>
+}
+```
+
+**Options:**
+
+- **`validationStrategy`**: 
+  - `'all'` (default): Validates all fields when any field changes
+  - `'changed'`: Only validates fields that changed (better performance)
+  
+- **`validateOnMount`**: 
+  - Controls whether validation runs immediately on mount
+  - Default: `true` for 'all' strategy, `false` for 'changed' strategy
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.

@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-10-15
+### Added
+- **Configurable Validation Strategies**: New `validationStrategy` option in `useFormValidation` composable
+  - `'all'` strategy: Validates all fields when any field changes (default, safest for cross-field validation)
+  - `'changed'` strategy: Only validates fields that changed (optimized performance for large forms)
+- **Mount Validation Control**: New `validateOnMount` option to control initial validation behavior
+  - Smart defaults: `true` for 'all' strategy, `false` for 'changed' strategy
+  - Can be explicitly set to override defaults for fine-grained control
+- **Single Field Validation**: Added `validateField()` method to `FormValidationEngine`
+  - Validates individual fields with full context for cross-field validation rules
+  - Used internally by 'changed' strategy for optimized performance
+
+### Improved
+- **Performance Optimization**: 'changed' strategy significantly reduces validation overhead in large forms
+  - Implements intelligent change detection using ref-based value snapshots
+  - Preserves errors for unchanged fields while revalidating only modified ones
+  - Properly handles Vue's deep watch limitations with reactive object tracking
+- **Documentation**: Enhanced README with comprehensive configuration examples
+  - Added "Validation Configuration Options" section with real-world usage scenarios
+  - Updated API Reference with detailed options documentation
+  - Organized documentation by framework (Pure JS, Vue.js, React, Node.js)
+
+### Technical
+- Implemented ref-based `previousValues` tracking to work around Vue's deep watch limitation
+- Ensured proper reactivity by creating new error objects on each validation
+- Maintained 100% test coverage with 110 passing tests (added 2 new configuration tests)
+
 ## [0.3.2] - 2025-10-14
 ### Improved
 - **Null Safety Optimization**: Refined null safety implementation based on actual runtime requirements:
