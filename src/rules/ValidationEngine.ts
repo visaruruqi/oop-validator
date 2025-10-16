@@ -19,6 +19,8 @@ import SocialSecurityValidationRule from "./SocialSecurityValidationRule";
 
 export default class ValidationEngine {
     private rules: IValidationRule[] = [];
+    private currentErrors: string[] = [];
+    private currentIsValid: boolean = true;
 
     constructor(initialRules: Array<string | { rule: string, params: any, message?: string } | IValidationRule> = []) {
         initialRules.forEach(rule => this.addRule(rule));
@@ -26,6 +28,28 @@ export default class ValidationEngine {
 
     getRules(): IValidationRule[] {
         return this.rules;
+    }
+    
+    /**
+     * Get current validation errors (stateful)
+     */
+    getErrors(): string[] {
+        return [...this.currentErrors];
+    }
+    
+    /**
+     * Get current validation status (stateful)
+     */
+    getIsValid(): boolean {
+        return this.currentIsValid;
+    }
+    
+    /**
+     * Reset validation state
+     */
+    reset(): void {
+        this.currentErrors = [];
+        this.currentIsValid = true;
     }
 
     addRule(rule: string | { rule: string, params: any, message?: string } | IValidationRule) {
@@ -139,11 +163,14 @@ export default class ValidationEngine {
             }
         });
 
+        // Store state for stateful API
+        this.currentErrors = errors;
+        this.currentIsValid = errors.length === 0;
+
         return {
             isValid: errors.length === 0,
             errors
         };
     }
 }
-
 

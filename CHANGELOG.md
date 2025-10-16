@@ -6,6 +6,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2025-10-16
+### Fixed
+- **Vue Composable Flexibility**: `useFormValidation` now properly handles all reactive types
+  - Uses Vue's `unref()` to support `Ref<T>`, `reactive()`, computed values, and props
+  - Previously only worked with `Ref<T>` objects
+  - Now works seamlessly with `props.modelValue`, `reactive()` objects, and any reactive reference
+  - No breaking changes - existing code continues to work
+
+## [0.5.1] - 2025-10-16
+### Internal
+- Code quality improvements
+
+## [0.5.0] - 2025-10-16
+### Added
+- **Unified Fields API**: New `fields` object in `useFormValidation` Vue composable (recommended)
+  - `fields.fieldName.isValid` - boolean indicating if field is valid
+  - `fields.fieldName.errors` - array of error messages for the field
+  - `fields.fieldName.isDirty` - boolean indicating if value changed from initial
+  - `fields.fieldName.isTouched` - boolean indicating if field was focused/blurred
+  - Cleaner, more intuitive API than separate `errors`, `getFieldErrors()`, `isFieldValid()`
+  - All field state in one place, easier to extend in the future
+
+- **Vue Form State Management**: New helper methods for better UX
+  - `reset()` - Reset form to initial state (clears errors, isDirty, isTouched)
+  - `touch(fieldName)` - Mark specific field as touched (useful for blur events)
+  - `touchAll()` - Mark all fields as touched (useful for showing errors on submit)
+
+- **Stateful JavaScript API**: New stateful methods in `ValidationEngine` class
+  - `getIsValid()` - Get current validation status without re-validating
+  - `getErrors()` - Get array of current error messages
+  - `reset()` - Clear validation state (useful for resetting forms)
+  - Validation state is automatically stored after calling `validateValue()`
+
+### Changed
+- Documentation restructured to promote new `fields` API as the recommended approach for Vue
+- Old Vue API (`errors`, `getFieldErrors`, `isFieldValid`) marked as deprecated but fully supported for backward compatibility
+- `ValidationEngine` now stores validation state internally (backward compatible - existing code works unchanged)
+
+### Improved
+- Better developer experience with unified `fields.fieldName.property` pattern in Vue
+- Supports "show errors only after touch" UX pattern
+- Supports "unsaved changes" warnings with `isDirty` tracking
+- Session-based state (resets on component unmount/page refresh)
+- Pure JavaScript API can now track validation state across multiple validations
+
 ## [0.4.0] - 2025-10-15
 ### Added
 - **Configurable Validation Strategies**: New `validationStrategy` option in `useFormValidation` composable

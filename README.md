@@ -144,6 +144,47 @@ const priceResult = priceValidation.validateValue('$99.99');
 // Returns: { isValid: true, errors: [] }
 ```
 
+#### Stateful API (NEW in v0.5.0)
+
+`ValidationEngine` now tracks validation state internally, making it easier to check current validation status:
+
+```javascript
+import { ValidationEngine } from 'oop-validator';
+
+const emailValidation = new ValidationEngine(['required', 'email']);
+
+// Validate a value
+emailValidation.validateValue('invalid-email');
+
+// Get current validation state (without re-validating)
+console.log(emailValidation.getIsValid());  // false
+console.log(emailValidation.getErrors());   // ['This field must be a valid email address.']
+
+// Validate again with valid input
+emailValidation.validateValue('valid@example.com');
+
+console.log(emailValidation.getIsValid());  // true
+console.log(emailValidation.getErrors());   // []
+
+// Reset validation state (useful for clearing form errors)
+emailValidation.reset();
+
+console.log(emailValidation.getIsValid());  // true
+console.log(emailValidation.getErrors());   // []
+```
+
+**Stateful methods:**
+- `getIsValid()` - Returns current validation status (true/false)
+- `getErrors()` - Returns array of current error messages
+- `reset()` - Clears validation state (sets isValid to true, clears errors)
+
+**Use cases:**
+- ✅ Check validation status without re-running validation
+- ✅ Reset form fields after successful submission
+- ✅ Clear errors when user starts typing
+- ✅ Track validation state across multiple validations
+```
+
 ### Custom Validation Rules
 
 Create your own validation rules for business-specific requirements:
@@ -334,13 +375,17 @@ const { errors, isValid } = useValidation(email, ['required', 'email']);
 
 ### useFormValidation - Multi-Field Form Validation
 
-The `useFormValidation` composable handles complex forms with multiple fields and provides comprehensive error management.
+The `useFormValidation` composable handles complex forms with multiple fields and provides comprehensive error management with the new unified `fields` API.
+
+> **Note:** Works with any reactive type - `ref()`, `reactive()`, computed values, and props like `modelValue`.
+
+#### New Unified Fields API (Recommended)
 
 ```javascript
 import { ref } from 'vue';
 import { useFormValidation } from 'oop-validator';
 
-// Form data
+// Form data - works with ref(), reactive(), or any reactive type
 const formData = ref({
   firstName: '',
   lastName: '',
@@ -356,30 +401,39 @@ const validationConfig = {
   phone: ['required', 'phone'],
 };
 
-// Get reactive validation state
+// Get reactive validation state with new fields API
 const {
-  errors, // Reactive object with errors per field
-  isValid, // Reactive boolean - true when ALL fields valid
-  summary, // Reactive array of all errors
-  validate, // Manual validation function
-  getFieldErrors, // Get errors for specific field
-  isFieldValid, // Check if specific field is valid
+  fields,    // NEW: Unified field state object (recommended)
+  isValid,   // Form-level validity
+  validate,  // Manual validation trigger
+  reset,     // Reset form to initial state
+  touch,     // Mark specific field as touched
+  touchAll,  // Mark all fields as touched
 } = useFormValidation(formData, validationConfig);
 
-// Field-specific helpers
-const emailErrors = getFieldErrors('email'); // Reactive ref with email errors
-const isEmailValid = isFieldValid('email'); // Reactive ref with email validity
+// Access complete field state through fields object
+console.log(fields.value.email.isValid)    // true/false - field is valid
+console.log(fields.value.email.errors)     // string[] - error messages
+console.log(fields.value.email.isDirty)    // true/false - value changed from initial
+console.log(fields.value.email.isTouched)  // true/false - field was focused/blurred
 
 // Handle form submission
 const handleSubmit = () => {
+  touchAll() // Show errors on all fields
   const result = validate();
   if (result.isValid) {
     console.log('Form is valid, submitting...', formData.value);
+    reset() // Reset form after successful submission
   }
+};
+
+// Handle field blur
+const handleBlur = (fieldName) => {
+  touch(fieldName) // Mark field as touched when user leaves it
 };
 ```
 
-**Full Vue component example:**
+**Full Vue component example with new fields API:**
 
 ```vue
 <template>
@@ -388,13 +442,17 @@ const handleSubmit = () => {
       <input
         v-model="formData.firstName"
         placeholder="First Name"
-        :class="{ error: !isFieldValid('firstName').value }"
+        @blur="touch('firstName')"
+        :class="{ 
+          error: fields.firstName.isTouched && !fields.firstName.isValid,
+          success: fields.firstName.isValid && fields.firstName.isDirty
+        }"
       />
-      <span
-        v-if="getFieldErrors('firstName').value.length"
-        class="error-message"
-      >
-        {{ getFieldErrors('firstName').value[0] }}
+      <!-- Show checkmark if field is valid and modified -->
+      <span v-if="fields.firstName.isValid && fields.firstName.isDirty" class="valid-icon">✓</span>
+      <!-- Only show errors after field is touched -->
+      <span v-if="fields.firstName.isTouched && fields.firstName.errors.length" class="error-message">
+        {{ fields.firstName.errors[0] }}
       </span>
     </div>
 
@@ -403,19 +461,20 @@ const handleSubmit = () => {
         v-model="formData.email"
         type="email"
         placeholder="Email"
-        :class="{ error: !isFieldValid('email').value }"
+        @blur="touch('email')"
+        :class="{ 
+          error: fields.email.isTouched && !fields.email.isValid,
+          success: fields.email.isValid && fields.email.isDirty
+        }"
       />
-      <span v-if="getFieldErrors('email').value.length" class="error-message">
-        {{ getFieldErrors('email').value[0] }}
+      <span v-if="fields.email.isValid && fields.email.isDirty" class="valid-icon">✓</span>
+      <span v-if="fields.email.isTouched && fields.email.errors.length" class="error-message">
+        {{ fields.email.errors[0] }}
       </span>
     </div>
 
     <button type="submit" :disabled="!isValid">Submit Form</button>
-
-    <!-- Show all validation errors -->
-    <div v-if="summary.length" class="error-summary">
-      <p v-for="error in summary" :key="error">{{ error }}</p>
-    </div>
+    <button type="button" @click="reset">Reset Form</button>
   </form>
 </template>
 
@@ -433,16 +492,56 @@ const config = {
   email: ['required', 'email'],
 };
 
-const { errors, isValid, summary, validate, getFieldErrors, isFieldValid } =
+const { fields, isValid, validate, reset, touch, touchAll } =
   useFormValidation(formData, config);
 
 const handleSubmit = () => {
+  touchAll() // Show all errors on submit attempt
   const result = validate();
   if (result.isValid) {
     console.log('Submitting:', formData.value);
+    // After successful API call:
+    reset() // Reset form state
   }
 };
 </script>
+```
+
+#### Legacy API (Deprecated)
+
+The old API is still supported for backward compatibility but we recommend migrating to the new `fields` API:
+
+```javascript
+// OLD API (still works but deprecated)
+const {
+  errors,           // Use fields.fieldName.errors instead
+  getFieldErrors,   // Use fields.fieldName.errors instead
+  isFieldValid,     // Use fields.fieldName.isValid instead
+} = useFormValidation(formData, validationConfig);
+```
+
+### Working with Different Reactive Types
+
+The composable works seamlessly with all Vue reactive types:
+
+```javascript
+import { ref, reactive, computed } from 'vue';
+
+// ✅ Works with ref()
+const formData = ref({ email: '', password: '' });
+useFormValidation(formData, config);
+
+// ✅ Works with reactive()
+const formData = reactive({ email: '', password: '' });
+useFormValidation(formData, config);
+
+// ✅ Works with computed()
+const formData = computed(() => ({ ...someState }));
+useFormValidation(formData, config);
+
+// ✅ Works with props (like v-model)
+const props = defineProps(['modelValue']);
+useFormValidation(props.modelValue, config);
 ```
 
 ### Validation Configuration Options
@@ -511,12 +610,30 @@ const { errors, isValid } = useFormValidation(formData, config, {
 
 // useFormValidation() returns reactive Vue refs and helper functions:
 {
-  errors: /* Vue ref containing object */ { [fieldName: string]: string[] },     // reactive object with errors by field
-  isValid: /* Vue ref containing boolean */ boolean,                             // reactive overall form validity
-  summary: /* Vue ref containing array */ string[],                             // reactive array of all errors
-  validate: (values?) => FormValidationResult,  // returns FormValidationResult, optional values param
-  getFieldErrors: (field) => /* Vue ref */ string[], // get reactive field errors
-  isFieldValid: (field) => /* Vue ref */ boolean     // get reactive field validity
+  // NEW: Unified fields API (recommended)
+  fields: /* Vue ref containing object */ {
+    [fieldName: string]: {
+      isValid: boolean,    // field is valid
+      errors: string[],    // error messages for this field
+      isDirty: boolean,    // value changed from initial
+      isTouched: boolean   // field was focused/blurred
+    }
+  },
+  
+  // Form-level state
+  isValid: /* Vue ref containing boolean */ boolean,              // reactive overall form validity
+  summary: /* Vue ref containing array */ string[],              // reactive array of all errors
+  
+  // Actions
+  validate: (values?) => FormValidationResult,  // manual validation trigger
+  reset: () => void,                            // reset form to initial state
+  touch: (fieldName: string) => void,           // mark specific field as touched
+  touchAll: () => void,                         // mark all fields as touched
+  
+  // DEPRECATED (still supported for backward compatibility):
+  errors: /* Vue ref containing object */ { [fieldName: string]: string[] },          // use fields.fieldName.errors instead
+  getFieldErrors: (field) => /* Vue ref */ string[],  // use fields.fieldName.errors instead
+  isFieldValid: (field) => /* Vue ref */ boolean      // use fields.fieldName.isValid instead
 }
 ```
 

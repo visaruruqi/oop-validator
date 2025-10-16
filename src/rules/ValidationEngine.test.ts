@@ -101,3 +101,68 @@ describe('ValidationEngine', () => {
         expect(result.errors).toEqual(['Only letters allowed.']);
     });
 });
+
+describe('ValidationEngine - Stateful API', () => {
+    it('should store validation errors and state after validateValue', () => {
+        const validationEngine = new ValidationEngine(['required', 'email']);
+        
+        // Validate invalid value
+        const result = validationEngine.validateValue('invalid-email');
+        
+        expect(result.isValid).toBe(false);
+        expect(result.errors.length).toBeGreaterThan(0);
+        
+        // Check stateful methods
+        expect(validationEngine.getIsValid()).toBe(false);
+        expect(validationEngine.getErrors()).toEqual(result.errors);
+    });
+    
+    it('should update state on subsequent validations', () => {
+        const validationEngine = new ValidationEngine(['required', 'email']);
+        
+        // First validation - invalid
+        validationEngine.validateValue('invalid');
+        expect(validationEngine.getIsValid()).toBe(false);
+        expect(validationEngine.getErrors().length).toBeGreaterThan(0);
+        
+        // Second validation - valid
+        validationEngine.validateValue('valid@example.com');
+        expect(validationEngine.getIsValid()).toBe(true);
+        expect(validationEngine.getErrors()).toEqual([]);
+    });
+    
+    it('should reset validation state', () => {
+        const validationEngine = new ValidationEngine(['required', 'email']);
+        
+        // Validate with errors
+        validationEngine.validateValue('invalid-email');
+        expect(validationEngine.getIsValid()).toBe(false);
+        expect(validationEngine.getErrors().length).toBeGreaterThan(0);
+        
+        // Reset
+        validationEngine.reset();
+        
+        // State should be cleared
+        expect(validationEngine.getIsValid()).toBe(true);
+        expect(validationEngine.getErrors()).toEqual([]);
+    });
+    
+    it('should not affect returned results from validateValue', () => {
+        const validationEngine = new ValidationEngine(['required']);
+        
+        // Validate
+        const result1 = validationEngine.validateValue('');
+        expect(result1.isValid).toBe(false);
+        
+        // Reset
+        validationEngine.reset();
+        
+        // Previous result should not be affected
+        expect(result1.isValid).toBe(false);
+        expect(result1.errors.length).toBeGreaterThan(0);
+        
+        // But state should be reset
+        expect(validationEngine.getIsValid()).toBe(true);
+        expect(validationEngine.getErrors()).toEqual([]);
+    });
+});
