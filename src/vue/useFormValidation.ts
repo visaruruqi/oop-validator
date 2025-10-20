@@ -32,6 +32,7 @@ export interface UseFormValidationResult {
   
   // Form-level
   isValid: Ref<boolean>
+  isModelDirty: Ref<boolean>
   summary: Ref<string[]>
   validate: (values?: Record<string, any>) => FormValidationResult
   reset: () => void
@@ -167,6 +168,11 @@ export default function useFormValidation(
     })
   }
 
+  // Form-level isDirty: true if any field is dirty
+  const isModelDirty = computed(() => {
+    return Object.values(fields.value).some(field => field.isDirty)
+  })
+
   // Track previous values for change detection
   // Vue's watch with deep:true doesn't provide proper oldValues snapshot for objects
   const previousValues = ref({ ...unref(formValues) })
@@ -251,6 +257,7 @@ export default function useFormValidation(
     
     // Form-level
     isValid,
+    isModelDirty,
     summary,
     validate,
     

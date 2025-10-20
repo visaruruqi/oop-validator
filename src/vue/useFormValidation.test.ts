@@ -2070,3 +2070,186 @@ describe('useFormValidation - reactive types (props, reactive, computed)', () =>
     expect(fields.value.email.isValid).toBe(true)
   })
 })
+
+describe('useFormValidation - isModelDirty', () => {
+  it('should return false when no fields are dirty', async () => {
+    const formData = ref({
+      email: 'test@example.com',
+      username: 'testuser',
+    })
+
+    const validationRules = {
+      email: ['required', 'email'],
+      username: ['required'],
+    }
+
+    const { isModelDirty } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    // No changes yet
+    expect(isModelDirty.value).toBe(false)
+  })
+
+  it('should return true when any field is dirty', async () => {
+    const formData = ref({
+      email: 'test@example.com',
+      username: 'testuser',
+    })
+
+    const validationRules = {
+      email: ['required', 'email'],
+      username: ['required'],
+    }
+
+    const { isModelDirty, fields } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(false)
+
+    // Change one field
+    formData.value.email = 'changed@example.com'
+    await nextTick()
+
+    expect(fields.value.email.isDirty).toBe(true)
+    expect(isModelDirty.value).toBe(true)
+  })
+
+  it('should return false after reset', async () => {
+    const formData = ref({
+      email: 'test@example.com',
+      username: 'testuser',
+    })
+
+    const validationRules = {
+      email: ['required', 'email'],
+      username: ['required'],
+    }
+
+    const { isModelDirty, reset } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    // Make changes
+    formData.value.email = 'changed@example.com'
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(true)
+
+    // Reset should clear dirty state
+    reset()
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(false)
+  })
+
+  it('should track dirty state with multiple field changes', async () => {
+    const formData = ref({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+    })
+
+    const validationRules = {
+      firstName: ['required'],
+      lastName: ['required'],
+      email: ['required', 'email'],
+    }
+
+    const { isModelDirty, fields } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(false)
+
+    // Change multiple fields
+    formData.value.firstName = 'Jane'
+    formData.value.email = 'jane@example.com'
+    await nextTick()
+
+    expect(fields.value.firstName.isDirty).toBe(true)
+    expect(fields.value.lastName.isDirty).toBe(false)
+    expect(fields.value.email.isDirty).toBe(true)
+    expect(isModelDirty.value).toBe(true)
+  })
+
+  it('should work with reactive() objects', async () => {
+    const formData = reactive({
+      email: 'test@example.com',
+      username: 'testuser',
+    })
+
+    const validationRules = {
+      email: ['required', 'email'],
+      username: ['required'],
+    }
+
+    const { isModelDirty } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(false)
+
+    formData.email = 'changed@example.com'
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(true)
+  })
+
+  it('should work with props.modelValue pattern', async () => {
+    const modelValue = ref({
+      name: 'Test',
+      email: 'test@example.com',
+    })
+
+    const validationRules = {
+      name: ['required'],
+      email: ['required', 'email'],
+    }
+
+    const { isModelDirty } = useFormValidation(modelValue, validationRules)
+
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(false)
+
+    // Simulate parent updating prop
+    modelValue.value = {
+      name: 'Changed',
+      email: 'test@example.com',
+    }
+
+    await nextTick()
+
+    expect(isModelDirty.value).toBe(true)
+  })
+
+  it('should return false when field changes back to original value', async () => {
+    const formData = ref({
+      email: 'original@example.com',
+    })
+
+    const validationRules = {
+      email: ['required', 'email'],
+    }
+
+    const { isModelDirty, fields } = useFormValidation(formData, validationRules)
+
+    await nextTick()
+
+    // Change field
+    formData.value.email = 'changed@example.com'
+    await nextTick()
+
+    expect(fields.value.email.isDirty).toBe(true)
+    expect(isModelDirty.value).toBe(true)
+
+    // Change back to original
+    formData.value.email = 'original@example.com'
+    await nextTick()
+
+    expect(fields.value.email.isDirty).toBe(false)
+    expect(isModelDirty.value).toBe(false)
+  })
+})

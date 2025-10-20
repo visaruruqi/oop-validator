@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2025-10-20
+### Added
+- **Form-level Dirty State**: New `isModelDirty` computed property
+  - Returns `true` if any field has changed from its initial value
+  - Returns `false` when all fields match their initial values
+  - Automatically updates when fields change or `reset()` is called
+  - Perfect for "unsaved changes" warnings and enabling/disabling save buttons
+  - Works with all reactive types (ref, reactive, computed, props)
+
+## [0.5.3] - 2025-10-16
+### Added
+- **TypeScript Support for All Reactive Types**: Updated function signature to accept `Ref<T> | Record<string, any>`
+  - Added 9 comprehensive tests for reactive(), computed(), readonly(), and props patterns
+  - Full support for props.modelValue and nested reactive objects
+  - All 162 tests passing with complete reactive type compatibility
+
 ## [0.5.2] - 2025-10-16
 ### Fixed
 - **Vue Composable Flexibility**: `useFormValidation` now properly handles all reactive types

@@ -403,12 +403,13 @@ const validationConfig = {
 
 // Get reactive validation state with new fields API
 const {
-  fields,    // NEW: Unified field state object (recommended)
-  isValid,   // Form-level validity
-  validate,  // Manual validation trigger
-  reset,     // Reset form to initial state
-  touch,     // Mark specific field as touched
-  touchAll,  // Mark all fields as touched
+  fields,         // NEW: Unified field state object (recommended)
+  isValid,        // Form-level validity
+  isModelDirty,   // Form-level dirty state (true if any field changed)
+  validate,       // Manual validation trigger
+  reset,          // Reset form to initial state
+  touch,          // Mark specific field as touched
+  touchAll,       // Mark all fields as touched
 } = useFormValidation(formData, validationConfig);
 
 // Access complete field state through fields object
@@ -416,6 +417,9 @@ console.log(fields.value.email.isValid)    // true/false - field is valid
 console.log(fields.value.email.errors)     // string[] - error messages
 console.log(fields.value.email.isDirty)    // true/false - value changed from initial
 console.log(fields.value.email.isTouched)  // true/false - field was focused/blurred
+
+// Check if form has unsaved changes
+console.log(isModelDirty.value)            // true/false - any field is dirty
 
 // Handle form submission
 const handleSubmit = () => {
@@ -431,6 +435,16 @@ const handleSubmit = () => {
 const handleBlur = (fieldName) => {
   touch(fieldName) // Mark field as touched when user leaves it
 };
+
+// Warn user about unsaved changes
+const handleNavigation = () => {
+  if (isModelDirty.value) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to leave?');
+    if (!confirmed) return false;
+  }
+  // Navigate away
+  return true;
+};
 ```
 
 **Full Vue component example with new fields API:**
@@ -438,6 +452,11 @@ const handleBlur = (fieldName) => {
 ```vue
 <template>
   <form @submit.prevent="handleSubmit">
+    <!-- Unsaved changes indicator -->
+    <div v-if="isModelDirty" class="alert alert-warning">
+      You have unsaved changes
+    </div>
+
     <div class="field">
       <input
         v-model="formData.firstName"
@@ -622,6 +641,7 @@ const { errors, isValid } = useFormValidation(formData, config, {
   
   // Form-level state
   isValid: /* Vue ref containing boolean */ boolean,              // reactive overall form validity
+  isModelDirty: /* Vue ref containing boolean */ boolean,         // true if any field is dirty
   summary: /* Vue ref containing array */ string[],              // reactive array of all errors
   
   // Actions
