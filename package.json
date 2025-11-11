@@ -1,6 +1,6 @@
 {
   "name": "oop-validator",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "type": "module",
   "main": "dist/oop-validator.umd.js",
   "module": "dist/oop-validator.es.js",

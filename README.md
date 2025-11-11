@@ -54,8 +54,10 @@ The core validation library is **completely framework-agnostic** and works in an
 
 - [Pure JavaScript API](#pure-javascript-api)
   - [Basic Validation Engine](#basic-validation-engine)
+  - [Custom Validation Rules](#custom-validation-rules)
   - [Form Validation Engine](#form-validation-engine)
 - [Vue.js Composables](#vuejs-composables)
+  - [Adding Custom Validation Rules](#adding-custom-validation-rules)
   - [Validation Configuration Options](#validation-configuration-options)
 - [React Integration](#react-integration)
   - [React Hook Examples](#react-hook-examples)
@@ -183,7 +185,7 @@ console.log(emailValidation.getErrors());   // []
 - ✅ Reset form fields after successful submission
 - ✅ Clear errors when user starts typing
 - ✅ Track validation state across multiple validations
-```
+
 
 ### Custom Validation Rules
 
@@ -223,7 +225,7 @@ export class PhoneNumberValidationRule extends IValidationRule {
 }
 
 // Register and use the custom rule
-const validationEngine = new ValidationEngine(['required', 'phone'])
+const validationEngine = new ValidationEngine(['required'])
 validationEngine.addRule(new PhoneNumberValidationRule())
 
 const phoneResult = validationEngine.validateValue('+1234567890')
@@ -232,6 +234,8 @@ if (!phoneResult.isValid) {
     console.log('Phone validation errors:', phoneResult.errors)
 }
 ```
+
+---
 
 ### Form Validation Engine
 
@@ -561,6 +565,133 @@ useFormValidation(formData, config);
 // ✅ Works with props (like v-model)
 const props = defineProps(['modelValue']);
 useFormValidation(props.modelValue, config);
+```
+
+---
+
+### Adding Custom Validation Rules
+
+You can extend the validation system with your own custom rules by accessing the `engine` property from `useFormValidation`.
+
+**⚠️ Important:** There are two approaches depending on whether you reference custom rules in the config:
+
+#### Approach 1: Add Custom Rules Without Config Reference (Recommended)
+
+Don't reference the custom rule name in the config. Instead, add it programmatically:
+
+```javascript
+import { ref } from 'vue';
+import { useFormValidation, IValidationRule } from 'oop-validator';
+
+// 1. Define your custom validation rule
+class EvenNumberValidationRule extends IValidationRule {
+  private errorMessage = 'Value must be an even number';
+
+  isValid(value: any): [boolean, string] {
+    const num = Number(value);
+    const valid = !isNaN(num) && num % 2 === 0;
+    return [valid, valid ? '' : this.errorMessage];
+  }
+
+  isMatch(type: string): boolean {
+    return type.toLowerCase() === 'evennumber';
+  }
+
+  setParams(params: any): void {}
+  setErrorMessage(message: string): void {
+    this.errorMessage = message;
+  }
+}
+
+const formData = ref({
+  age: '',
+  luckyNumber: '',
+});
+
+// 2. Use only built-in rules in config
+const config = {
+  age: ['required'],  // Don't reference 'evenNumber' here
+  luckyNumber: ['required'],
+};
+
+// 3. Get engine and add custom rule BEFORE any validation
+const { fields, isValid, engine } = useFormValidation(formData, config, {
+  validateOnMount: false
+});
+
+// 4. Add custom rule to specific fields
+engine.addRuleToField('age', new EvenNumberValidationRule());
+engine.addRuleToField('luckyNumber', new EvenNumberValidationRule());
+```
+
+---
+
+#### Important Notes
+- ⚠️ **Don't reference custom rule names in the config** - they won't exist during initialization
+- ⚠️ **`addRuleToField()` only works for fields that exist in the config** - you'll see a console warning for non-existent fields
+- Add custom rules **immediately after** getting the engine reference, before user interaction
+- Custom rules must implement the `IValidationRule` interface with 4 required methods:
+  - `isValid(value)` - Returns `[boolean, string]` tuple (valid status and error message)
+  - `isMatch(type)` - Returns true if the rule matches the validation type string
+  - `setParams(params)` - Sets custom parameters for the rule
+  - `setErrorMessage(message)` - Sets a custom error message
+
+**Example - Correct field names:**
+```javascript
+const config = {
+  age: ['required'],      // ✅ 'age' field exists
+  email: ['required'],    // ✅ 'email' field exists
+};
+
+const { engine } = useFormValidation(formData, config);
+
+// ✅ Works - field 'age' exists in config
+engine.addRuleToField('age', new EvenNumberValidationRule());
+
+// ❌ Shows warning - field 'agee' (typo) doesn't exist in config
+// Console: "Cannot add rule to field "agee": field does not exist in validation config. Available fields: age, email"
+engine.addRuleToField('agee', new EvenNumberValidationRule());
+
+// ❌ Shows warning - field 'username' was never defined in config
+// Console: "Cannot add rule to field "username": field does not exist in validation config. Available fields: age, email"
+engine.addRuleToField('username', new CustomRule());
+```
+
+---
+
+**Custom Rule with Parameters and Error Messages:**
+
+```javascript
+class MinAgeValidationRule extends IValidationRule {
+  private minAge = 18;
+  private errorMessage = 'Age must be at least 18';
+
+  isValid(value: any): [boolean, string] {
+    const age = Number(value);
+    const valid = !isNaN(age) && age >= this.minAge;
+    return [valid, valid ? '' : this.errorMessage];
+  }
+
+  isMatch(type: string): boolean {
+    return type.toLowerCase() === 'minage';
+  }
+
+  setParams(params: any): void {
+    if (params.age) this.minAge = params.age;
+  }
+
+  setErrorMessage(message: string): void {
+    this.errorMessage = message;
+  }
+}
+
+// Usage with custom parameters
+const { engine } = useFormValidation(formData, config);
+
+const ageRule = new MinAgeValidationRule();
+ageRule.setParams({ age: 21 });
+ageRule.setErrorMessage('You must be at least 21 years old');
+engine.addRuleToField('age', ageRule);
 ```
 
 ### Validation Configuration Options
@@ -1026,6 +1157,8 @@ new FormValidationEngine(config: { [fieldName: string]: Array<string | RuleConfi
 **Methods:**
 
 - `validate(data: object): FormValidationResult` - Validates all form fields
+- `validateField(fieldName: string, value: any, allValues?: object): ValidationResult` - Validates a single field
+- `addRuleToField(fieldName: string, rule: IValidationRule): void` - Adds a custom validation rule to a specific field
 
 **Return Type:**
 
@@ -1056,17 +1189,39 @@ useValidation(
 
 ```javascript
 useFormValidation(
-  formData: Ref<object>,
+  formData: Ref<object> | object,
   config: { [fieldName: string]: Array<string | RuleConfig> },
   options?: {
     validationStrategy?: 'all' | 'changed',  // default: 'all'
     validateOnMount?: boolean                 // default: true for 'all', false for 'changed'
   }
 ): {
-  errors: Ref<{ [fieldName: string]: string[] }>,
+  // New unified fields API (recommended)
+  fields: Ref<{
+    [fieldName: string]: {
+      isValid: boolean,
+      errors: string[],
+      isDirty: boolean,
+      isTouched: boolean
+    }
+  }>,
+  
+  // Form-level state
   isValid: Ref<boolean>,
+  isModelDirty: Ref<boolean>,
   summary: Ref<string[]>,
+  
+  // Actions
   validate: (values?: object) => FormValidationResult,
+  reset: () => void,
+  touch: (fieldName: string) => void,
+  touchAll: () => void,
+  
+  // Engine access for custom rules
+  engine: FormValidationEngine,
+  
+  // Deprecated (still supported)
+  errors: Ref<{ [fieldName: string]: string[] }>,
   getFieldErrors: (field: string) => Ref<string[]>,
   isFieldValid: (field: string) => Ref<boolean>
 }

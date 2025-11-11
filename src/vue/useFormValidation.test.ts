@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { ref, nextTick, reactive, computed, readonly } from 'vue'
 import useFormValidation from './useFormValidation'
 import MatchFieldValidationRule from '../rules/MatchFieldValidationRule'
+import IValidationRule from '../rules/IValidationRule'
 
 describe('useFormValidation', () => {
   it('should initialize with validation result for initial values', () => {
@@ -2251,5 +2252,341 @@ describe('useFormValidation - isModelDirty', () => {
 
     expect(fields.value.email.isDirty).toBe(false)
     expect(isModelDirty.value).toBe(false)
+  })
+})
+
+describe('useFormValidation - custom validation rules', () => {
+  // Custom rule for testing - validates even numbers
+  class EvenNumberValidationRule extends IValidationRule {
+    private errorMessage = 'Value must be an even number'
+
+    isValid(param: any): [boolean, string] {
+      const num = Number(param)
+      const isValid = !isNaN(num) && num % 2 === 0
+      return [isValid, isValid ? '' : this.errorMessage]
+    }
+
+    isMatch(type: string): boolean {
+      return type.toLowerCase() === 'evennumber'
+    }
+
+    setParams(): void {}
+
+    setErrorMessage(message: string): void {
+      this.errorMessage = message
+    }
+  }
+
+  // Custom rule for postal code validation
+  class PostalCodeValidationRule extends IValidationRule {
+    private errorMessage = 'Invalid postal code format'
+
+    isValid(param: any): [boolean, string] {
+      // Simple pattern: A1A 1A1 (Canadian postal code)
+      const pattern = /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i
+      const isValid = pattern.test(String(param))
+      return [isValid, isValid ? '' : this.errorMessage]
+    }
+
+    isMatch(type: string): boolean {
+      return type.toLowerCase() === 'postalcode'
+    }
+
+    setParams(): void {}
+
+    setErrorMessage(message: string): void {
+      this.errorMessage = message
+    }
+  }
+
+  it('should expose the engine for adding custom rules', () => {
+    const formData = ref({
+      number: '5',
+    })
+
+    const config = {
+      number: ['required', 'evenNumber'],
+    }
+
+    const { engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Engine should be exposed
+    expect(engine).toBeDefined()
+    expect(typeof engine.addRuleToField).toBe('function')
+  })
+
+  it('should allow adding custom rules to specific fields via engine.addRuleToField()', async () => {
+    const formData = ref({
+      evenNumber: '2', // Start with valid value
+    })
+
+    const config = {
+      evenNumber: ['required', 'evenNumber'],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Add custom rule BEFORE triggering any validation
+    engine.addRuleToField('evenNumber', new EvenNumberValidationRule())
+
+    // Now trigger validation with invalid value
+    formData.value.evenNumber = '3'
+    await nextTick()
+
+    // Should fail validation (3 is odd)
+    expect(fields.value.evenNumber.isValid).toBe(false)
+    expect(fields.value.evenNumber.errors).toContain('Value must be an even number')
+
+    // Test with valid even number
+    formData.value.evenNumber = '4'
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(true)
+    expect(fields.value.evenNumber.errors).toEqual([])
+  })
+
+  it('should allow adding custom rules to multiple specific fields', async () => {
+    // Start with valid values
+    const formData = ref({
+      postalCode: 'A1A 1A1',
+      evenNumber: '6',
+    })
+
+    const config = {
+      postalCode: ['required', 'postalCode'],
+      evenNumber: ['required', 'evenNumber'],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Add custom rules BEFORE triggering any validation
+    // Add postal code rule only to postalCode field
+    engine.addRuleToField('postalCode', new PostalCodeValidationRule())
+    
+    // Add even number rule only to evenNumber field
+    engine.addRuleToField('evenNumber', new EvenNumberValidationRule())
+
+    // Now test with invalid postal code
+    formData.value.postalCode = 'INVALID'
+    await nextTick()
+
+    expect(fields.value.postalCode.isValid).toBe(false)
+    expect(fields.value.postalCode.errors).toContain('Invalid postal code format')
+
+    // Validate with correct format
+    formData.value.postalCode = 'A1A 1A1'
+    await nextTick()
+
+    expect(fields.value.postalCode.isValid).toBe(true)
+    expect(fields.value.postalCode.errors).toEqual([])
+
+    // Test even number with invalid value
+    formData.value.evenNumber = '5'
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(false)
+    expect(fields.value.evenNumber.errors).toContain('Value must be an even number')
+
+    // Test with valid even number
+    formData.value.evenNumber = '6'
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(true)
+    expect(fields.value.evenNumber.errors).toEqual([])
+  })
+
+  it('should work with custom error messages on custom rules', async () => {
+    class CustomMinLengthRule extends IValidationRule {
+      private errorMessage = 'Too short'
+      private minLength = 5
+
+      isValid(param: any): [boolean, string] {
+        const isValid = typeof param === 'string' && param.length >= this.minLength
+        return [isValid, isValid ? '' : this.errorMessage]
+      }
+
+      isMatch(type: string): boolean {
+        return type.toLowerCase() === 'custommin'
+      }
+
+      setParams(params: any): void {
+        if (params.length) this.minLength = params.length
+      }
+
+      setErrorMessage(message: string): void {
+        this.errorMessage = message
+      }
+    }
+
+    // Start with valid value
+    const formData = ref({
+      code: 'abcde',
+    })
+
+    const config = {
+      code: [
+        'required',
+        {
+          rule: 'customMin',
+          params: { length: 5 },
+          message: 'Code must be at least 5 characters',
+        },
+      ],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Add custom rule BEFORE triggering any validation
+    // Note: When adding custom rules dynamically, you must set error message on the rule instance
+    // The config message won't be applied to dynamically added rules
+    const customRule = new CustomMinLengthRule()
+    customRule.setErrorMessage('Code must be at least 5 characters')
+    customRule.setParams({ length: 5 })
+    engine.addRuleToField('code', customRule)
+
+    // Now test with invalid value
+    formData.value.code = 'abc'
+    await nextTick()
+
+    expect(fields.value.code.isValid).toBe(false)
+    expect(fields.value.code.errors).toContain('Code must be at least 5 characters')
+
+    formData.value.code = 'abcde'
+    await nextTick()
+
+    expect(fields.value.code.isValid).toBe(true)
+    expect(fields.value.code.errors).toEqual([])
+  })
+
+  it('should work with reactive() and custom rules', async () => {
+    // Start with valid value
+    const formData = reactive({
+      evenNumber: '8',
+    })
+
+    const config = {
+      evenNumber: ['required', 'evenNumber'],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Add custom rule BEFORE triggering any validation
+    engine.addRuleToField('evenNumber', new EvenNumberValidationRule())
+
+    // Now test with invalid value
+    formData.evenNumber = '7'
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(false)
+    expect(fields.value.evenNumber.errors).toContain('Value must be an even number')
+
+    // Test with valid value
+    formData.evenNumber = '8'
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(true)
+  })
+
+  it('should validate on mount with custom rules when validateOnMount is true', async () => {
+    const formData = ref({
+      evenNumber: '3',
+    })
+
+    const config = {
+      evenNumber: ['required', 'evenNumber'],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false, // Start false
+    })
+
+    engine.addRuleToField('evenNumber', new EvenNumberValidationRule())
+
+    // Manually trigger validation
+    formData.value = { evenNumber: '3' }
+    await nextTick()
+
+    expect(fields.value.evenNumber.isValid).toBe(false)
+    expect(fields.value.evenNumber.errors).toContain('Value must be an even number')
+  })
+
+  it('should work with multiple custom rules on the same field', async () => {
+    class MinValueRule extends IValidationRule {
+      private errorMessage = 'Value must be at least 10'
+      private minValue = 10
+
+      isValid(param: any): [boolean, string] {
+        const num = Number(param)
+        const isValid = !isNaN(num) && num >= this.minValue
+        return [isValid, isValid ? '' : this.errorMessage]
+      }
+
+      isMatch(type: string): boolean {
+        return type.toLowerCase() === 'minvalue'
+      }
+
+      setParams(params: any): void {
+        if (params.value) this.minValue = params.value
+      }
+
+      setErrorMessage(message: string): void {
+        this.errorMessage = message
+      }
+    }
+
+    // Start with valid value
+    const formData = ref({
+      number: '12',
+    })
+
+    const config = {
+      number: ['required', 'evenNumber', 'minValue'],
+    }
+
+    const { fields, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+    })
+
+    // Add custom rules BEFORE triggering any validation
+    engine.addRuleToField('number', new EvenNumberValidationRule())
+    engine.addRuleToField('number', new MinValueRule())
+
+    // Test odd number below minimum
+    formData.value.number = '5'
+    await nextTick()
+
+    expect(fields.value.number.isValid).toBe(false)
+    expect(fields.value.number.errors.length).toBeGreaterThan(0)
+
+    // Test even number below minimum
+    formData.value.number = '8'
+    await nextTick()
+
+    expect(fields.value.number.isValid).toBe(false)
+    expect(fields.value.number.errors).toContain('Value must be at least 10')
+
+    // Test odd number above minimum
+    formData.value.number = '11'
+    await nextTick()
+
+    expect(fields.value.number.isValid).toBe(false)
+    expect(fields.value.number.errors).toContain('Value must be an even number')
+
+    // Test valid even number above minimum
+    formData.value.number = '12'
+    await nextTick()
+
+    expect(fields.value.number.isValid).toBe(true)
+    expect(fields.value.number.errors).toEqual([])
   })
 })

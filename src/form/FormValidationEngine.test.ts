@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import FormValidationEngine, { FormConfig } from './FormValidationEngine'
 import { MatchFieldValidationRule } from '../index'
+import IValidationRule from '../rules/IValidationRule'
 
 describe('FormValidationEngine', () => {
   it('validates multiple fields and collects summary', () => {
@@ -84,5 +85,78 @@ describe('FormValidationEngine', () => {
     engine.validate(values)
 
     expect(rule.contextSet).toEqual(values)
+  })
+})
+
+describe('FormValidationEngine - custom rules', () => {
+  // Custom rule for testing
+  class EvenNumberValidationRule extends IValidationRule {
+    private errorMessage = 'Must be an even number'
+
+    isValid(param: any): [boolean, string] {
+      const num = Number(param)
+      const isValid = !isNaN(num) && num % 2 === 0
+      return [isValid, isValid ? '' : this.errorMessage]
+    }
+
+    isMatch(type: string): boolean {
+      return type.toLowerCase() === 'evennumber'
+    }
+
+    setParams(): void {}
+
+    setErrorMessage(message: string): void {
+      this.errorMessage = message
+    }
+  }
+
+  it('should allow adding custom rules to specific fields via addRuleToField()', () => {
+    const config: FormConfig = {
+      evenNumber: ['required', 'evenNumber'],
+      anyNumber: ['required'],
+    }
+
+    const engine = new FormValidationEngine(config)
+    engine.addRuleToField('evenNumber', new EvenNumberValidationRule())
+
+    const values = { evenNumber: '3', anyNumber: '5' }
+    const result = engine.validate(values)
+
+    expect(result.isValid).toBe(false)
+    expect(result.fieldErrors.evenNumber).toContain('Must be an even number')
+    expect(result.fieldErrors.anyNumber).toEqual([]) // No custom rule applied
+
+    const values2 = { evenNumber: '4', anyNumber: '5' }
+    const result2 = engine.validate(values2)
+
+    expect(result2.isValid).toBe(true)
+  })
+
+  it('should handle addRuleToField for non-existent field gracefully', () => {
+    const config: FormConfig = {
+      number: ['required'],
+    }
+
+    const engine = new FormValidationEngine(config)
+    
+    // Mock console.warn to capture the warning
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    
+    // Should not throw error but should warn
+    expect(() => {
+      engine.addRuleToField('nonExistentField', new EvenNumberValidationRule())
+    }).not.toThrow()
+
+    // Verify warning was called
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Cannot add rule to field "nonExistentField": field does not exist in validation config. Available fields: number'
+    )
+
+    consoleWarnSpy.mockRestore()
+
+    const values = { number: '5' }
+    const result = engine.validate(values)
+
+    expect(result.isValid).toBe(true)
   })
 })

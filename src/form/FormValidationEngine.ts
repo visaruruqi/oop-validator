@@ -71,4 +71,18 @@ export default class FormValidationEngine {
 
     return engine.validateValue(value)
   }
+
+  /**
+   * Add a custom validation rule to a specific field engine
+   * @param fieldName - The name of the field to add the rule to
+   * @param rule - The custom validation rule to add
+   */
+  addRuleToField(fieldName: string, rule: IValidationRule): void {
+    const engine = this.engines[fieldName]
+    if (engine) {
+      engine.addRule(rule)
+    } else {
+      console.warn(`Cannot add rule to field "${fieldName}": field does not exist in validation config. Available fields: ${Object.keys(this.engines).join(', ')}`)
+    }
+  }
 }

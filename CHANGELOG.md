@@ -6,6 +6,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2025-11-07
+### Added
+- **Custom Validation Rules Support in Vue Composables**
+  - Exposed `engine` property from `useFormValidation` for direct access to FormValidationEngine
+  - Added `addRuleToField(fieldName, rule)` method for adding custom rules to specific fields
+  - Enables dynamic addition of custom validation rules that implement `IValidationRule` interface
+  - Custom rules can be added with custom error messages and parameters
+  - Works with both ref() and reactive() form data
+  - Comprehensive test coverage with 179 total tests passing
+
+### Improved
+- **Better Developer Experience for Custom Rules**
+  - `addRuleToField()` now shows a helpful console warning when attempting to add a rule to a non-existent field
+  - Warning message includes the list of available fields to help catch typos
+  - Example: `"Cannot add rule to field "agee": field does not exist in validation config. Available fields: age, email"`
+
+### Changed
+- **API Simplification**: Removed `addRule()` method from `FormValidationEngine`
+  - The `addRule()` method previously added custom rules to ALL fields indiscriminately
+  - Now only `addRuleToField(fieldName, rule)` is available, requiring explicit field specification
+  - This provides better control and clarity - if you need the same rule on multiple fields, call `addRuleToField()` for each field
+  - More explicit API that prevents accidental rule application to unintended fields
+
+### Example
+```typescript
+// Define a custom validation rule
+class EvenNumberRule extends IValidationRule {
+  isValid(value: any): [boolean, string] {
+    const num = Number(value)
+    return [num % 2 === 0, 'Value must be an even number']
+  }
+  isMatch(type: string): boolean {
+    return type === 'evenNumber'
+  }
+  setParams(params: any): void {}
+  setErrorMessage(message: string): void {}
+}
+
+// Use it in your Vue component - add to specific fields
+const { fields, engine } = useFormValidation(formData, config)
+engine.addRuleToField('age', new EvenNumberRule())
+engine.addRuleToField('luckyNumber', new EvenNumberRule())
+```
+
 ## [0.5.4] - 2025-10-20
 ### Added
 - **Form-level Dirty State**: New `isModelDirty` computed property

@@ -41,6 +41,9 @@ export interface UseFormValidationResult {
   touch: (fieldName: string) => void
   touchAll: () => void
   
+  // Engine access for custom rules
+  engine: FormValidationEngine
+  
   // DEPRECATED: Keep for backward compatibility
   errors: Ref<Record<string, string[]>>
   getFieldErrors: (field: string) => Ref<string[]>
@@ -260,6 +263,9 @@ export default function useFormValidation(
     isModelDirty,
     summary,
     validate,
+    
+    // Engine access for custom rules
+    engine,
     
     // DEPRECATED: Keep for backward compatibility
     errors,
