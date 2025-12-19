@@ -65,6 +65,9 @@ export default function useFormValidation(
   // Store initial values for isDirty tracking
   const initialValues = ref({ ...unref(formValues) })
   
+  // Flag to prevent validation during reset
+  let isResetting = false
+  
   // NEW: Unified fields API
   const fields = ref<Record<string, FieldState>>({})
   
@@ -99,8 +102,14 @@ export default function useFormValidation(
   
   // NEW: Reset function
   const reset = () => {
+    // Set flag to prevent watcher from re-validating during reset
+    isResetting = true
+    
     // Reset to initial values
     initialValues.value = { ...unref(formValues) }
+    
+    // Reset underlying engine state
+    engine.reset()
     
     // Reset fields state
     const resetFields: Record<string, FieldState> = {}
@@ -118,6 +127,14 @@ export default function useFormValidation(
     errors.value = {}
     isValid.value = true
     summary.value = []
+    
+    // Reset previous values for change detection
+    previousValues.value = { ...unref(formValues) }
+    
+    // Clear the flag after a microtask to allow any pending watchers to be skipped
+    Promise.resolve().then(() => {
+      isResetting = false
+    })
   }
   
   // NEW: Touch a specific field
@@ -183,6 +200,11 @@ export default function useFormValidation(
   watch(
     formValues,
     (newValues: Record<string, any>) => {
+      // Skip validation if reset is in progress
+      if (isResetting) {
+        return
+      }
+      
       if (validationStrategy === 'changed') {
         // Optimized: Only validate fields that changed
         const changedFields = Object.keys(newValues).filter(

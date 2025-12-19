@@ -85,4 +85,11 @@ export default class FormValidationEngine {
       console.warn(`Cannot add rule to field "${fieldName}": field does not exist in validation config. Available fields: ${Object.keys(this.engines).join(', ')}`)
     }
   }
+
+  /**
+   * Reset validation state for all field engines
+   */
+  reset(): void {
+    Object.values(this.engines).forEach(engine => engine.reset())
+  }
 }

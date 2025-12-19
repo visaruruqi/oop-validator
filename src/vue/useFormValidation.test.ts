@@ -2589,4 +2589,167 @@ describe('useFormValidation - custom validation rules', () => {
     expect(fields.value.number.isValid).toBe(true)
     expect(fields.value.number.errors).toEqual([])
   })
+
+  it('should properly reset errors after validation with custom rules and value change', async () => {
+    // This test simulates the user's use case:
+    // 1. User types a value
+    // 2. Validates the value
+    // 3. Clears the input and calls reset()
+    // 4. Errors should be cleared (not re-triggered by the watcher)
+    
+    class UniqueValueValidationRule extends IValidationRule {
+      private existingValues: string[] = []
+      private errorMessage = 'Value already exists'
+
+      isValid(value: any): [boolean, string] {
+        if (!value) return [true, '']
+        const isDuplicate = this.existingValues.includes(value.toLowerCase())
+        return [!isDuplicate, isDuplicate ? this.errorMessage : '']
+      }
+
+      isMatch(type: string): boolean {
+        return type.toLowerCase() === 'uniquevalue'
+      }
+
+      setParams(params: any): void {
+        if (params.values) this.existingValues = params.values
+      }
+
+      setErrorMessage(message: string): void {
+        this.errorMessage = message
+      }
+    }
+
+    const formData = ref({
+      email: ''
+    })
+
+    const config = {
+      email: ['email']  // Don't reference custom rule in config
+    }
+
+    const { fields, validate, reset, engine } = useFormValidation(formData, config, {
+      validateOnMount: false,
+      validationStrategy: 'changed'
+    })
+
+    // Add custom rule
+    const uniqueRule = new UniqueValueValidationRule()
+    uniqueRule.setParams({ values: ['existing@test.com'] })
+    engine.addRuleToField('email', uniqueRule)
+
+    // Initial state - no errors
+    expect(fields.value.email.isValid).toBe(true)
+    expect(fields.value.email.errors).toEqual([])
+
+    // Step 1: User types a valid email
+    formData.value.email = 'new@test.com'
+    await nextTick()
+
+    // Step 2: Validate (should pass)
+    const result = validate()
+    expect(result.isValid).toBe(true)
+    expect(fields.value.email.isValid).toBe(true)
+    expect(fields.value.email.errors).toEqual([])
+
+    // Step 3: Clear the input AND reset (simulates adding to a list and clearing form)
+    formData.value.email = ''
+    reset()
+    await nextTick()
+
+    // Step 4: Errors should be cleared - the reset should prevent the watcher from re-validating
+    expect(fields.value.email.isValid).toBe(true)
+    expect(fields.value.email.errors).toEqual([])
+  })
+
+  it('should properly reset errors when input is cleared before reset()', async () => {
+    // Simulates the exact pattern from the user's component:
+    // emailInput.email = ''
+    // reset()
+    
+    const formData = ref({
+      value: 'test'
+    })
+
+    const config = {
+      value: ['required']
+    }
+
+    const { fields, validate, reset } = useFormValidation(formData, config, {
+      validateOnMount: false,
+      validationStrategy: 'changed'
+    })
+
+    // Initial state
+    expect(fields.value.value.isValid).toBe(true)
+
+    // User types something and validates
+    formData.value.value = 'hello'
+    await nextTick()
+    validate()
+    expect(fields.value.value.isValid).toBe(true)
+
+    // User clears input and immediately calls reset
+    // Without the fix, the watcher would re-validate the empty field
+    // and show "required" error after reset completes
+    formData.value.value = ''
+    reset()
+    await nextTick()
+
+    // Errors should be cleared
+    expect(fields.value.value.isValid).toBe(true)
+    expect(fields.value.value.errors).toEqual([])
+  })
+
+  it('should not re-validate during reset even with multiple nextTicks', async () => {
+    // This test verifies the reset behavior works correctly.
+    // Note: In real browsers, Vue's watcher scheduling may cause the watcher
+    // to fire AFTER reset() starts but BEFORE it completes, causing errors to
+    // reappear. The isResetting flag prevents this race condition.
+    // 
+    // In the test environment, the behavior may appear synchronous, but
+    // the fix is still necessary for real browser usage where the user
+    // reported the issue.
+    
+    const formData = ref({
+      email: ''
+    })
+
+    const config = {
+      email: ['required', 'email']
+    }
+
+    const { fields, validate, reset } = useFormValidation(formData, config, {
+      validateOnMount: false,
+      validationStrategy: 'changed'
+    })
+
+    // First, put the form in a valid state
+    formData.value.email = 'test@example.com'
+    await nextTick()
+    validate()
+    expect(fields.value.email.isValid).toBe(true)
+
+    // Now clear the field (which would normally trigger validation)
+    // and immediately call reset
+    formData.value.email = ''
+    reset()
+    
+    // Multiple ticks to ensure watcher doesn't re-validate
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    // Fields should still show as valid (reset state)
+    expect(fields.value.email.isValid).toBe(true)
+    expect(fields.value.email.errors).toEqual([])
+    
+    // Now after reset, typing should trigger validation again
+    formData.value.email = 'invalid'
+    await nextTick()
+    
+    // Now validation should work (isResetting flag should be cleared)
+    expect(fields.value.email.isValid).toBe(false)
+    expect(fields.value.email.errors.length).toBeGreaterThan(0)
+  })
 })

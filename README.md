@@ -1159,6 +1159,7 @@ new FormValidationEngine(config: { [fieldName: string]: Array<string | RuleConfi
 - `validate(data: object): FormValidationResult` - Validates all form fields
 - `validateField(fieldName: string, value: any, allValues?: object): ValidationResult` - Validates a single field
 - `addRuleToField(fieldName: string, rule: IValidationRule): void` - Adds a custom validation rule to a specific field
+- `reset(): void` - Resets validation state for all field engines
 
 **Return Type:**
 

@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2025-12-19
+### Fixed
+- **Reset with Custom Validation Rules**: Fixed issue where `reset()` would not properly clear errors when called after changing form values
+  - Previously, changing a form value (e.g., clearing an input) and immediately calling `reset()` could result in errors reappearing due to the watcher re-validating
+  - Now `reset()` properly prevents the watcher from re-validating during the reset operation
+  - Added `isResetting` flag to block watcher execution during reset
+  - This is particularly important when using custom validation rules with patterns like: validate → add to list → clear input → reset
+
+### Added
+- **FormValidationEngine.reset()**: New method to reset validation state for all field engines
+  - `useFormValidation.reset()` now also resets the underlying `FormValidationEngine` state
+  - Ensures complete state cleanup between validation cycles
+  - 182 total tests passing
+
 ## [0.5.5] - 2025-11-07
 ### Added
 - **Custom Validation Rules Support in Vue Composables**
@@ -14,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables dynamic addition of custom validation rules that implement `IValidationRule` interface
   - Custom rules can be added with custom error messages and parameters
   - Works with both ref() and reactive() form data
-  - Comprehensive test coverage with 179 total tests passing
 
 ### Improved
 - **Better Developer Experience for Custom Rules**

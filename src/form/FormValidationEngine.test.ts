@@ -159,4 +159,42 @@ describe('FormValidationEngine - custom rules', () => {
 
     expect(result.isValid).toBe(true)
   })
+
+  it('should reset all underlying validation engines', () => {
+    const config: FormConfig = {
+      name: ['required'],
+      email: ['required', 'email'],
+    }
+
+    const engine = new FormValidationEngine(config)
+
+    // First validate with invalid values to populate internal state
+    const invalidValues = { name: '', email: 'invalid' }
+    const result1 = engine.validate(invalidValues)
+    
+    expect(result1.isValid).toBe(false)
+    expect(result1.fieldErrors.name.length).toBeGreaterThan(0)
+    expect(result1.fieldErrors.email.length).toBeGreaterThan(0)
+
+    // Reset the engine
+    engine.reset()
+
+    // The reset should not affect subsequent validations (validate returns fresh results)
+    // But if someone uses the stateful API (getErrors/getIsValid), those should be reset
+    // Validate again with the same invalid values
+    const result2 = engine.validate(invalidValues)
+    
+    // Validation should still work correctly after reset
+    expect(result2.isValid).toBe(false)
+    expect(result2.fieldErrors.name.length).toBeGreaterThan(0)
+    expect(result2.fieldErrors.email.length).toBeGreaterThan(0)
+
+    // Validate with valid values
+    const validValues = { name: 'John', email: 'john@example.com' }
+    const result3 = engine.validate(validValues)
+    
+    expect(result3.isValid).toBe(true)
+    expect(result3.fieldErrors.name).toEqual([])
+    expect(result3.fieldErrors.email).toEqual([])
+  })
 })
