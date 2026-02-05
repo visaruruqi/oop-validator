@@ -4,8 +4,12 @@ export default class DomainValidationRule implements IValidationRule {
     private errorMessage: string = "This field must be a valid domain.";
 
     isValid(param: string): [boolean, string] {
-        // Safely handle null, undefined, or non-string values
-        if (param == null || typeof param !== 'string') {
+        // Allow null, undefined, or empty string (optional field)
+        if (param == null || param === '') {
+            return [true, ''];
+        }
+        
+        if (typeof param !== 'string') {
             return [false, this.errorMessage];
         }
         
