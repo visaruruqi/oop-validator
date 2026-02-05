@@ -4,8 +4,8 @@ export default class MinValidationRule implements IValidationRule {
     private minLength: number = 0;
     private errorMessage: string = "";
 
-    isValid(param: string): [boolean, string] {
-        // Safely handle null, undefined, or non-string values
+    isValid(param: string = ''): [boolean, string] {
+        // Reject null, undefined, or non-string values
         if (param == null || typeof param !== 'string') {
             return [false, this.errorMessage || `This field must be at least ${this.minLength} characters long.`];
         }

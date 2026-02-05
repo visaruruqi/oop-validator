@@ -4,6 +4,11 @@ export default class DateValidationRule implements IValidationRule {
   private errorMessage = 'This field must be a valid date.'
 
   isValid(param: string): [boolean, string] {
+    // Allow null, undefined, or empty string (optional field)
+    if (param == null || param === '') {
+      return [true, '']
+    }
+    
     const pattern = /^\d{4}-\d{2}-\d{2}$/
     let isValid = false
     if (pattern.test(param)) {
