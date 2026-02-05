@@ -19,8 +19,13 @@ export default class CreditCardValidationRule implements IValidationRule {
   }
 
   isValid(param: string): [boolean, string] {
-    // Safely handle null, undefined, or non-string values
-    if (param == null || typeof param !== 'string') {
+    // Allow null, undefined, or empty string (optional field)
+    if (param == null || param === '') {
+      return [true, '']
+    }
+    
+    // Ensure it's a string
+    if (typeof param !== 'string') {
       return [false, this.errorMessage]
     }
     

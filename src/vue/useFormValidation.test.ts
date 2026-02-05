@@ -1023,7 +1023,7 @@ describe('useFormValidation - changed strategy with null/empty initial values', 
     formData.value.field1 = undefined
     await nextTick()
 
-    // Should detect as change and validate
+    // MinValidationRule now rejects null/undefined
     expect(fields.value.field1.isValid).toBe(false)
     expect(fields.value.field1.isDirty).toBe(true)
 
@@ -1031,7 +1031,7 @@ describe('useFormValidation - changed strategy with null/empty initial values', 
     formData.value.field2 = null
     await nextTick()
 
-    // Should detect as change and validate
+    // MinValidationRule now rejects null/undefined
     expect(fields.value.field2.isValid).toBe(false)
     expect(fields.value.field2.isDirty).toBe(true)
   })
