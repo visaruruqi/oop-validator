@@ -4,6 +4,9 @@ export default class EmailValidationRule implements IValidationRule {
     private errorMessage: string = "This field must be a valid email address.";
 
     isValid(param: string): [boolean, string] {
+        if (param === null || param === undefined) {
+            return [true, ""];
+        }
         const emailPattern = /^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const isValid = emailPattern.test(param);
         return [isValid, isValid ? "" : this.errorMessage];
