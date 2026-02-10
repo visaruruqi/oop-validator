@@ -5,9 +5,14 @@ export default class MaxValidationRule implements IValidationRule {
     private errorMessage: string = "";
 
     isValid(param: string): [boolean, string] {
-        // Safely handle null, undefined, or non-string values
-        if (param == null || typeof param !== 'string') {
-            return [false, this.errorMessage || `This field must be no more than ${this.maxLength} characters long.`];
+        // Pass validation for null/undefined - let required rule handle presence
+        if (param == null) {
+            return [true, ""];
+        }
+        
+        // Reject non-string values
+        if (typeof param !== 'string') {
+            return [false, this.errorMessage || `This field must be a string.`];
         }
         
         const isValid = param.length <= this.maxLength;
@@ -19,8 +24,10 @@ export default class MaxValidationRule implements IValidationRule {
     }
 
     setParams(params: any): void {
-        if (typeof params.length === 'number') {
-            this.maxLength = params.length;
+        if (params && typeof params === 'object' && typeof params.length === 'number') {
+            if (params.length >= 0 && !isNaN(params.length)) {
+                this.maxLength = params.length;
+            }
         }
     }
 
