@@ -9,6 +9,6 @@ describe('PasswordStrengthValidationRule', () => {
 
   it('rejects weak password', () => {
     const rule = new PasswordStrengthValidationRule()
-    expect(rule.isValid('weak')).toEqual([false, 'Password is too weak.'])
+    expect(rule.isValid('weak')).toEqual([false, 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.'])
   })
 })

@@ -10,5 +10,8 @@ describe('SocialSecurityValidationRule', () => {
   it('rejects invalid ssn', () => {
     const rule = new SocialSecurityValidationRule()
     expect(rule.isValid('123')).toEqual([false, 'This field must be a valid SSN.'])
+    expect(rule.isValid('123456789')[0]).toBe(false)
+    expect(rule.isValid('123-456789')[0]).toBe(false)
+    expect(rule.isValid('123456-78')[0]).toBe(false)
   })
 })

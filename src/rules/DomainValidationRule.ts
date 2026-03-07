@@ -13,7 +13,8 @@ export default class DomainValidationRule implements IValidationRule {
             return [false, this.errorMessage];
         }
         
-        const isValid = param.includes('.');
+        const pattern = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+        const isValid = pattern.test(param);
         return [isValid, isValid ? "" : this.errorMessage];
     }
 

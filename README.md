@@ -1052,19 +1052,19 @@ The library includes a comprehensive set of built-in validation rules for common
 - **`email`** - Valid email address format
 - **`url`** - Valid URL format
 - **`phone`** - Valid phone number format
-- **`date`** - Valid date format
+- **`date`** - Valid date format (`YYYY-MM-DD` only)
 
 ### Financial Rules
 
 - **`currency`** - Valid currency format ($123.45, €99.00, etc.)
-- **`bankAccount`** - Valid bank account number
+- **`bankAccount`** - Valid bank account number (8–20 digits; IBAN format not supported)
 - **`creditCard`** - Valid credit card number
 
 ### Geographic Rules
 
-- **`zipCode`** - Valid ZIP/postal code
+- **`zipCode`** - Valid US ZIP code (5-digit or ZIP+4 format; international postal codes not supported)
 - **`domain`** - Valid domain name
-- **`ip`** - Valid IP address
+- **`ip`** - Valid IP address (IPv4 and IPv6 including compressed notation like `::1`)
 
 ### Identity Rules
 
@@ -1074,7 +1074,7 @@ The library includes a comprehensive set of built-in validation rules for common
 ### Advanced Rules
 
 - **`regex`** - Custom regex pattern: `{ rule: 'regex', params: { regex: '^[A-Z]+$' } }`
-- **`password`** - Password strength validation
+- **`password`** - Password strength validation (requires uppercase, lowercase, digit, special character, min 8 chars)
 - **`MatchFieldValidationRule`** - Cross-field match (use the class directly, no string key): `new MatchFieldValidationRule('otherFieldName')`
 
 ### Custom Messages

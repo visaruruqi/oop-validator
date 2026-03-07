@@ -9,7 +9,7 @@ export default class SocialSecurityValidationRule implements IValidationRule {
       return [true, '']
     }
     
-    const pattern = /^\d{3}-?\d{2}-?\d{4}$/
+    const pattern = /^\d{3}-\d{2}-\d{4}$/
     const isValid = pattern.test(param)
     return [isValid, isValid ? '' : this.errorMessage]
   }

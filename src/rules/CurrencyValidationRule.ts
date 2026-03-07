@@ -9,7 +9,7 @@ export default class CurrencyValidationRule implements IValidationRule {
       return [true, '']
     }
     
-    const pattern = /^\$?\d+(?:\.\d{2})?$/
+    const pattern = /^[$€£¥]?\d+(?:\.\d{2})?$/
     const isValid = pattern.test(param)
     return [isValid, isValid ? '' : this.errorMessage]
   }
