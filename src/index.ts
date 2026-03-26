@@ -38,3 +38,6 @@ export { computeFieldClasses, computeFormClasses } from './vue/cssClasses'
 export { default as NumericMinValidationRule } from './rules/NumericMinValidationRule'
 export { default as NumericMaxValidationRule } from './rules/NumericMaxValidationRule'
 export { default as NumberValidationRule } from './rules/NumberValidationRule'
+
+// Vue directives
+export { VValidationPlugin, vRequired, vMinlength, vMaxlength, vPattern, vMin, vMax, vType, vMessages, vMessage, vSubmit, vFormGroup } from './vue/directives/install'
