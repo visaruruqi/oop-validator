@@ -242,13 +242,13 @@ describe('FormValidationEngine - new methods', () => {
       name: ['required']
     });
     const result = engine.validate({ email: 'bad', name: '' });
-    expect(result.fieldErrorsByRule.email).toEqual({ email: true });
+    expect(result.fieldErrorsByRule.email).toEqual({ required: false, email: true });
     expect(result.fieldErrorsByRule.name).toEqual({ required: true });
   });
 
   it('fieldErrorsByRule should be empty objects for valid fields', () => {
     const engine = new FormValidationEngine({ name: ['required'] });
     const result = engine.validate({ name: 'John' });
-    expect(result.fieldErrorsByRule.name).toEqual({});
+    expect(result.fieldErrorsByRule.name).toEqual({ required: false });
   });
 });

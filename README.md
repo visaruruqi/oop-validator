@@ -9,7 +9,8 @@ A class-based validation library for JavaScript and TypeScript. Stack rules on i
 
 - **Class-based rules** — each rule implements `IValidationRule`, making them easy to extend, compose, and test independently
 - **Framework-agnostic core** — works in Node.js, React, Angular, or vanilla JS with zero peer dependencies
-- **Optional Vue 3 composables** — `useValidation` and `useFormValidation` for reactive form state out of the box
+- **Optional Vue 3 composables** — `useValidation`, `useFormValidation`, and `useForm` for reactive form state out of the box
+- **AngularJS-style Vue directives** — `v-required`, `v-minlength`, `v-maxlength`, `v-pattern`, `v-min`, `v-max`, `v-type`, `v-messages`, `v-submit`, and more via `VValidationPlugin`
 - **Form-level validation** — `FormValidationEngine` validates all fields at once and returns per-field errors plus a flat summary
 - **Custom error messages** — override the default error message per rule, per field
 - **20 built-in rules** — required, min/max length, email, phone, URL, credit card, password strength, and more
@@ -72,6 +73,19 @@ The core library is **framework-agnostic** — works in Node.js, React, Angular,
 - [Vue.js Composables](#vuejs-composables)
   - [Adding Custom Validation Rules](#adding-custom-validation-rules)
   - [Validation Configuration Options](#validation-configuration-options)
+- [Vue Directives](#vue-directives)
+  - [Setup](#setup)
+  - [useForm](#useform)
+  - [Directive Reference](#directive-reference)
+  - [v-required](#v-required)
+  - [v-minlength / v-maxlength](#v-minlength--v-maxlength)
+  - [v-pattern](#v-pattern)
+  - [v-min / v-max](#v-min--v-max)
+  - [v-type](#v-type)
+  - [v-messages / v-message](#v-messages--v-message)
+  - [v-submit](#v-submit)
+  - [v-form-group](#v-form-group)
+  - [CSS Classes](#css-classes)
 - [React Integration](#react-integration)
   - [React Hook Examples](#react-hook-examples)
   - [Component Integration](#component-integration)
@@ -762,6 +776,243 @@ const { fields, isValid } = useFormValidation(formData, config, {
   validationStrategy: 'changed',
   validateOnMount: true
 })
+```
+
+---
+
+## Vue Directives
+
+`oop-validator` ships with a full set of AngularJS-style validation directives for Vue 3. They wire directly into the DOM — no manual event listeners, no boilerplate — and automatically apply CSS classes for valid/invalid/touched/dirty state.
+
+### Setup
+
+Register the plugin once in your app entry:
+
+```javascript
+import { createApp } from 'vue'
+import { VValidationPlugin } from 'oop-validator'
+import App from './App.vue'
+
+createApp(App).use(VValidationPlugin).mount('#app')
+```
+
+### useForm
+
+`useForm` is the companion composable for the directive system. It binds a reactive data object to a named `<form>` element and returns a form instance used by all child directives.
+
+```html
+<script setup>
+import { reactive } from 'vue'
+import { useForm } from 'oop-validator'
+
+const data = reactive({ name: '', email: '' })
+const form = useForm('myForm', data)
+</script>
+
+<template>
+  <form name="myForm" v-submit="handleSubmit">
+    <input name="name" v-model="data.name" v-required />
+    <input name="email" type="email" v-model="data.email" v-required v-type />
+  </form>
+</template>
+```
+
+**`useForm(name, data, options?)`**
+
+| Param | Type | Description |
+|---|---|---|
+| `name` | `string` | Must match the `name` attribute on the `<form>` element |
+| `data` | `ref` / `reactive` | The reactive form data object |
+| `options` | `object` | Same options as `useFormValidation` |
+
+The returned `form` object is a Proxy that exposes all `useFormValidation` methods plus shorthand field access: `form.email` is equivalent to `form.fields.value.email`.
+
+---
+
+### Directive Reference
+
+All directives require:
+1. A parent `<form name="...">` element
+2. A `name` attribute on the input element (used as the field key)
+
+---
+
+### v-required
+
+Marks a field as required. Accepts a dynamic boolean.
+
+```html
+<input name="email" v-model="data.email" v-required />
+<input name="email" v-model="data.email" v-required="true" />
+<input name="terms" type="checkbox" v-model="data.terms" v-required="mustAgree" />
+```
+
+---
+
+### v-minlength / v-maxlength
+
+Validates string length bounds.
+
+```html
+<input name="username" v-model="data.username" v-minlength="3" v-maxlength="20" />
+```
+
+---
+
+### v-pattern
+
+Validates against a regex. Accepts a regex literal or string.
+
+```html
+<input name="slug" v-model="data.slug" v-pattern="/^[a-z0-9-]+$/" />
+<input name="slug" v-model="data.slug" v-pattern="'^[a-z0-9-]+$'" />
+```
+
+---
+
+### v-min / v-max
+
+Validates numeric value bounds.
+
+```html
+<input name="age"  type="number" v-model="data.age"  v-min="18" />
+<input name="qty"  type="number" v-model="data.qty"  v-min="1" v-max="100" />
+```
+
+---
+
+### v-type
+
+Registers a type-based validation rule derived from the input's `type` attribute or an explicit value. Supported types: `email`, `url`, `phone`, `number`, `date`.
+
+```html
+<input name="email" type="email" v-model="data.email" v-type />
+<input name="site"  v-model="data.site"  v-type="'url'" />
+```
+
+---
+
+### v-messages / v-message
+
+`v-messages` is a container directive placed on a wrapper element. It receives the field's `$error` map and controls visibility of individual `v-message` children.
+
+```html
+<div v-messages="form.email?.$error ?? {}">
+  <span v-message="'required'">Email is required.</span>
+  <span v-message="'type'">Enter a valid email address.</span>
+</div>
+```
+
+Each `v-message="'ruleKey'"` child is shown only when that specific rule is failing.
+
+---
+
+### v-submit
+
+Replaces `@submit.prevent`. Calls the handler only when the form is valid; otherwise marks all fields as touched to reveal errors.
+
+```html
+<form name="myForm" v-submit="handleSubmit">
+  ...
+</form>
+```
+
+```javascript
+const handleSubmit = () => {
+  // only called when all fields are valid
+  console.log('submitting', data)
+}
+```
+
+---
+
+### v-form-group
+
+Applied to a wrapper element (e.g. `<div class="field">`). Mirrors the CSS state classes of the named field onto the container, useful for styling entire field groups.
+
+```html
+<div v-form-group="'email'" class="field">
+  <label>Email</label>
+  <input name="email" v-model="data.email" v-required v-type />
+</div>
+```
+
+---
+
+### CSS Classes
+
+Directives automatically toggle these classes on the input element:
+
+| Class | When applied |
+|---|---|
+| `v-valid` | Field passes all rules |
+| `v-invalid` | Field fails at least one rule |
+| `v-pristine` | Value has not changed since mount |
+| `v-dirty` | Value has changed |
+| `v-touched` | Field has been blurred |
+| `v-untouched` | Field has not been blurred |
+| `v-pending` | Async validation in progress |
+| `v-valid-{rule}` | Specific rule is passing |
+| `v-invalid-{rule}` | Specific rule is failing |
+
+Default styles for `v-invalid.v-touched` (red border) and `v-valid.v-dirty` (green border) are included. Override them in your own CSS:
+
+```css
+input.v-invalid.v-touched { border-color: #e53e3e; }
+input.v-valid.v-dirty     { border-color: #38a169; }
+```
+
+---
+
+### Full Example
+
+```html
+<script setup>
+import { reactive } from 'vue'
+import { useForm } from 'oop-validator'
+
+const data = reactive({ name: '', email: '', age: '' })
+const form = useForm('contact', data)
+
+const handleSubmit = () => {
+  console.log('valid form:', data)
+}
+</script>
+
+<template>
+  <form name="contact" v-submit="handleSubmit">
+
+    <div class="field">
+      <label>Name</label>
+      <input name="name" v-model="data.name" v-required v-minlength="2" />
+      <div v-messages="form.name?.$error ?? {}">
+        <span v-message="'required'">Name is required.</span>
+        <span v-message="'minlength'">At least 2 characters.</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input name="email" type="email" v-model="data.email" v-required v-type />
+      <div v-messages="form.email?.$error ?? {}">
+        <span v-message="'required'">Email is required.</span>
+        <span v-message="'type'">Enter a valid email.</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Age</label>
+      <input name="age" type="number" v-model="data.age" v-required v-min="18" v-max="120" />
+      <div v-messages="form.age?.$error ?? {}">
+        <span v-message="'required'">Age is required.</span>
+        <span v-message="'min'">Must be at least 18.</span>
+        <span v-message="'max'">Cannot exceed 120.</span>
+      </div>
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+</template>
 ```
 
 ---

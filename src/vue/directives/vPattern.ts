@@ -41,12 +41,18 @@ export const vPattern: Directive<HTMLElement, string | RegExp> = {
     }
 
     cleanupMap.set(el, { fieldName })
+    ;(el as any).__prevDisabled = (el as HTMLInputElement).disabled
     updateCssClasses(el, form, fieldName)
   },
 
   updated(el, binding: DirectiveBinding<string | RegExp>) {
     const cleanup = cleanupMap.get(el)
-    if (!cleanup || binding.value === binding.oldValue) return
+    if (!cleanup) return
+    // Compare by regex source+flags (not reference) since regex literals
+    // create new objects on each render, which would trigger infinite loops.
+    const newStr = patternToRegexString(binding.value)
+    const oldStr = binding.oldValue ? patternToRegexString(binding.oldValue) : undefined
+    if (newStr === oldStr && (el as HTMLInputElement).disabled === ((el as any).__prevDisabled)) return
 
     const form = getFormInstance(el)
     if (!form) return
@@ -62,6 +68,7 @@ export const vPattern: Directive<HTMLElement, string | RegExp> = {
 
     form.validate()
     updateCssClasses(el, form, cleanup.fieldName)
+    ;(el as any).__prevDisabled = (el as HTMLInputElement).disabled
   },
 
   unmounted(el) {

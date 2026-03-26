@@ -6,6 +6,10 @@ export type FormInstance = UseFormValidationResult
 // WeakMap keys are DOM elements — auto-GC'd when elements are collected
 export const formRegistry = new WeakMap<HTMLFormElement, FormInstance>()
 
+// Name-based registry for synchronous lookup before onMounted fires.
+// Directives mount before onMounted, so we need a way to find the form by name.
+export const formNameRegistry = new Map<string, FormInstance>()
+
 export interface FieldController {
   fieldName: string
   blurHandler: () => void
@@ -36,10 +40,16 @@ export function getParentForm(el: HTMLElement): HTMLFormElement | null {
 }
 
 // Helper: get form instance from registry
+// First tries WeakMap by element (populated in onMounted), then falls back to
+// name-based Map which is populated synchronously during setup() so directives
+// can find the form even before onMounted fires.
 export function getFormInstance(el: HTMLElement): FormInstance | null {
   const formEl = getParentForm(el)
   if (!formEl) return null
-  return formRegistry.get(formEl) ?? null
+  if (formRegistry.has(formEl)) return formRegistry.get(formEl)!
+  const name = formEl.getAttribute('name')
+  if (name) return formNameRegistry.get(name) ?? null
+  return null
 }
 
 // Helper: ensure a field controller exists for an element

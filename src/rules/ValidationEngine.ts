@@ -185,10 +185,12 @@ export default class ValidationEngine {
 
         this.rules.forEach(rule => {
             const [isValid, errorMessage] = rule.isValid(value);
+            const key = this.ruleKeyMap.get(rule);
             if (!isValid) {
                 errors.push(errorMessage);
-                const key = this.ruleKeyMap.get(rule);
                 if (key) errorsByRule[key] = true;
+            } else {
+                if (key) errorsByRule[key] = false;
             }
         });
 

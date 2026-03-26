@@ -1,0 +1,149 @@
+Install vue-router: npm install vue-router@4
+
+Set up a router with example pages demonstrating every validation feature we implemented. Keep the existing src/components/ValidationForm.vue untouched — it becomes one of the examples.
+
+## File structure
+
+```
+src/
+  router.ts                                    ← NEW: router config
+  main.ts                                      ← MODIFY: add router + VValidationPlugin
+  App.vue                                      ← MODIFY: add nav sidebar + <router-view>
+  components/
+    ValidationForm.vue                         ← KEEP AS-IS (legacy example)
+  vue/
+    examples/
+      ExampleLayout.vue                        ← shared layout wrapper with nav
+      01-ContactForm.vue                       ← basic: text, email, textarea, select, radio, checkbox
+      02-RegistrationForm.vue                  ← password confirm, async email uniqueness, terms checkbox
+      03-DynamicItemsForm.vue                  ← v-for items add/remove, v-if conditional fields
+      04-NumericValidation.vue                 ← v-min, v-max on number inputs, v-type
+      05-MessagesShowcase.vue                  ← v-messages vs v-messages.multiple, default messages
+      06-FormStateDebugger.vue                 ← exposes every $property, shows CSS classes live
+```
+
+## Router config (src/router.ts)
+
+Routes:
+- `/` → redirect to `/examples/contact`
+- `/legacy` → existing ValidationForm.vue (the old component, proving backward compat)
+- `/examples/contact` → 01-ContactForm
+- `/examples/registration` → 02-RegistrationForm
+- `/examples/dynamic` → 03-DynamicItemsForm
+- `/examples/numeric` → 04-NumericValidation
+- `/examples/messages` → 05-MessagesShowcase
+- `/examples/debugger` → 06-FormStateDebugger
+
+## main.ts changes
+
+```ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import { VValidationPlugin } from './index'  // our plugin
+import './assets/style.css'
+
+const app = createApp(App)
+app.use(router)
+app.use(VValidationPlugin)
+app.mount('#app')
+```
+
+## App.vue changes
+
+Convert to `<script setup>`. Add a sidebar nav with router-links to each example. Main area has `<router-view>`. Keep it clean — simple flexbox layout, sidebar on the left, content on the right.
+
+## Example 1: ContactForm (01-ContactForm.vue)
+
+Basic "Contact Us" form demonstrating core directives:
+- **Full Name** — text, v-required, v-minlength="2", v-maxlength="100", v-pattern="/^[a-zA-Z\s]+$/"
+- **Email** — type="email", v-required, v-type
+- **Phone** — type="tel", optional, v-pattern="/^\+?[0-9\s-]{7,15}$/"
+- **Subject** — `<select>`, v-required
+- **Message** — `<textarea>`, v-required, v-minlength="10", v-maxlength="2000", show character count
+- **Priority** — radio buttons (Low/Medium/High), v-required
+- **Subscribe** — checkbox, NOT required
+- **Accept terms** — checkbox, v-required
+- v-submit on form, :disabled="form.$invalid" on button, form.$reset() on reset button
+- v-messages + v-message for each field's errors
+- v-show="form.fieldName?.$touched || form.$submitted" on each error block
+
+## Example 2: RegistrationForm (02-RegistrationForm.vue)
+
+Shows async validation and cross-field matching:
+- **Username** — v-required, v-minlength="3", v-maxlength="20", v-pattern="/^[a-zA-Z0-9_]+$/"
+- **Email** — v-required, v-type, with async uniqueness check (mock it with a setTimeout that rejects "taken@example.com")
+- **Password** — v-required, v-minlength="8", v-pattern="/(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])/", use v-messages.multiple to show all errors at once
+- **Confirm Password** — v-required, add MatchFieldValidationRule via form.engine programmatically
+- **Age** — type="number", v-required, v-min="13", v-max="120"
+- **Terms** — checkbox, v-required
+- Show $pending spinner next to email while async validates
+- Show form.$submitted state
+
+## Example 3: DynamicItemsForm (03-DynamicItemsForm.vue)
+
+Shows v-if conditional fields and v-for dynamic lists:
+- **Order type** — radio: "Single Item" or "Bulk Order"
+- When "Bulk Order": show **Company Name** field (v-if, v-required, v-minlength="2") and **VAT Number** (v-if, v-pattern)
+- When "Single Item": those fields disappear and are removed from form validation
+- **Items list** — v-for with Add/Remove buttons:
+  - Each item has: Description (v-required, v-minlength="3"), Quantity (type="number", v-required, v-min="1", v-max="999"), Price (type="number", v-required, v-min="0.01")
+- Dynamic `:name="`items[${index}].description`"` pattern
+- Show that form.$valid updates correctly when items are added/removed
+- Show that removing a conditional field doesn't leave stale errors
+
+## Example 4: NumericValidation (04-NumericValidation.vue)
+
+Focused demo of numeric validation vs string length validation:
+- **Age** — v-min="0", v-max="150" (numeric value)
+- **Score** — v-min="0", v-max="100" (numeric value)
+- **Username** — v-minlength="3", v-maxlength="20" (string LENGTH, not value)
+- **Bio** — v-maxlength="500" (string length on textarea)
+- Side-by-side comparison showing: v-min/v-max validates the NUMBER, v-minlength/v-maxlength validates the STRING LENGTH
+- Display both the value and the string length for each field so the difference is obvious
+
+## Example 5: MessagesShowcase (05-MessagesShowcase.vue)
+
+Shows all v-messages/v-message features:
+- **Field 1** — multiple rules, v-messages (default: shows first error only)
+- **Field 2** — same rules, v-messages.multiple (shows all errors at once)
+- Side-by-side display so user can see the difference
+- **Field 3** — shows dynamic v-message keys (v-message="dynamicKey" where dynamicKey is a ref)
+- Explain in the UI with text labels what each mode does
+
+## Example 6: FormStateDebugger (06-FormStateDebugger.vue)
+
+Interactive debugger showing every state property in real-time:
+- **One input field** with v-required, v-minlength="3", v-maxlength="20", v-pattern="/^[a-z]+$/"
+- Live display table showing:
+  - form.$valid, form.$invalid
+  - form.$pristine, form.$dirty
+  - form.$submitted, form.$pending
+  - form.field.$valid, form.field.$invalid
+  - form.field.$pristine, form.field.$dirty
+  - form.field.$touched, form.field.$untouched
+  - form.field.$error (full object, JSON formatted)
+  - form.field.$name
+  - form.$error (aggregated, JSON formatted)
+- Live CSS class display: show which v-* CSS classes are currently on the input element (read from el.classList)
+- Buttons: "Touch field" (programmatic $setTouched), "Set Pristine", "Set Dirty", "Submit", "Reset", "$validate()"
+- Each button shows what method it calls
+
+## Styling
+
+Each example should have:
+- Clean, readable layout with form labels, spacing
+- Standard validation CSS using the auto-applied classes:
+```css
+input.v-invalid.v-touched,
+textarea.v-invalid.v-touched,
+select.v-invalid.v-touched { border-color: #e74c3c; }
+
+input.v-valid.v-dirty,
+textarea.v-valid.v-dirty,
+select.v-valid.v-dirty { border-color: #2ecc71; }
+```
+- Error messages in red, pending indicators in blue
+- Each example has a title and a brief description of what it demonstrates
+
+After creating everything, run `npm run dev` and verify the app loads with the sidebar navigation and all 6 examples + the legacy page work in the browser.

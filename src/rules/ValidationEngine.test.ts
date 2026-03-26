@@ -171,7 +171,7 @@ describe('ValidationEngine - ruleKey tracking', () => {
   it('should track ruleKey when adding rules by string name', () => {
     const engine = new ValidationEngine(['required', 'email']);
     const result = engine.validateValue('');
-    expect(result.errorsByRule).toEqual({ required: true });
+    expect(result.errorsByRule).toEqual({ required: true, email: false });
   });
 
   it('should track ruleKey when adding rules by config object', () => {
@@ -202,7 +202,7 @@ describe('ValidationEngine - ruleKey tracking', () => {
   it('should return empty errorsByRule when all rules pass', () => {
     const engine = new ValidationEngine(['required', 'email']);
     const result = engine.validateValue('test@example.com');
-    expect(result.errorsByRule).toEqual({});
+    expect(result.errorsByRule).toEqual({ required: false, email: false });
   });
 
   it('should return multiple keys in errorsByRule when multiple rules fail', () => {
@@ -214,7 +214,7 @@ describe('ValidationEngine - ruleKey tracking', () => {
     const result = engine.validateValue('ab');
     expect(result.errorsByRule.min).toBe(true);
     expect(result.errorsByRule.email).toBe(true);
-    expect(result.errorsByRule.required).toBeUndefined();
+    expect(result.errorsByRule.required).toBe(false);
   });
 
   it('should still return errors as string[] (backward compat)', () => {

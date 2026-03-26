@@ -33,6 +33,7 @@ export const vRequired: Directive<HTMLElement, boolean | undefined> = {
     }
 
     cleanupMap.set(el, { fieldName, ruleKey: 'required' })
+    ;(el as any).__prevDisabled = (el as HTMLInputElement).disabled
     updateCssClasses(el, form, fieldName)
   },
 

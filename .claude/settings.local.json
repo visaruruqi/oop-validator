@@ -6,7 +6,11 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebSearch",
       "Bash(grep -n \"NEW\\\\|Max 10 tags\\\\|{ errors, isValid }\\\\|socialSecurity.*socialSecurity\\\\|passwordStrength\\\\|ipAddress\\\\b\\\\|matchField\\\\b\\\\|fieldName.*password\" /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/README.md)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(npm run:*)",
+      "Bash(cp /tmp/touched_bug.test.ts /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/src/vue/touched_bug.test.ts)",
+      "Bash(npx vitest:*)",
+      "Bash(grep -rn \"validate\\(\\)\" /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/src/vue/directives/*.ts)"
     ]
   }
 }

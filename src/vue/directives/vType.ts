@@ -64,12 +64,18 @@ export const vType: Directive<HTMLElement, string | undefined> = {
     }
 
     cleanupMap.set(el, { fieldName, typeKey: ruleInfo?.key ?? null })
+    ;(el as any).__prevDisabled = (el as HTMLInputElement).disabled
     updateCssClasses(el, form, fieldName)
   },
 
   updated(el, binding) {
     const cleanup = cleanupMap.get(el)
     if (!cleanup) return
+
+    const newType = binding.value ?? (el as HTMLInputElement).type ?? ''
+    const oldType = binding.oldValue ?? (el as HTMLInputElement).type ?? ''
+    const disabled = (el as HTMLInputElement).disabled
+    if (newType === oldType && disabled === (el as any).__prevDisabled) return
 
     const form = getFormInstance(el)
     if (!form) return
@@ -79,16 +85,16 @@ export const vType: Directive<HTMLElement, string | undefined> = {
       form.unregisterRule(cleanup.fieldName, cleanup.typeKey)
     }
 
-    const inputType = binding.value || (el as HTMLInputElement).type || ''
-    const ruleInfo = getRuleForType(inputType)
+    const ruleInfo = getRuleForType(newType)
 
-    if (ruleInfo && !(el as HTMLInputElement).disabled) {
+    if (ruleInfo && !disabled) {
       form.registerRule(cleanup.fieldName, ruleInfo.key, ruleInfo.rule)
     }
 
     cleanup.typeKey = ruleInfo?.key ?? null
     form.validate()
     updateCssClasses(el, form, cleanup.fieldName)
+    ;(el as any).__prevDisabled = disabled
   },
 
   unmounted(el) {

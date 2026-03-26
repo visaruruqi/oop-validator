@@ -2761,14 +2761,14 @@ describe('useFormValidation - $error keyed object', () => {
     const data = ref({ email: '' });
     const { fields } = useFormValidation(data, { email: ['required', 'email'] });
     await nextTick();
-    expect(fields.value.email.$error).toEqual({ required: true });
+    expect(fields.value.email.$error).toEqual({ required: true, email: false });
   });
 
   it('should have empty $error when field is valid', async () => {
     const data = ref({ email: 'test@example.com' });
     const { fields } = useFormValidation(data, { email: ['required', 'email'] });
     await nextTick();
-    expect(fields.value.email.$error).toEqual({});
+    expect(fields.value.email.$error).toEqual({ required: false, email: false });
   });
 
   it('should update $error reactively when value changes', async () => {
@@ -2779,12 +2779,12 @@ describe('useFormValidation - $error keyed object', () => {
 
     data.value.email = 'bad';
     await nextTick();
-    expect(fields.value.email.$error.required).toBeUndefined();
+    expect(fields.value.email.$error.required).toBe(false);
     expect(fields.value.email.$error.email).toBe(true);
 
     data.value.email = 'good@test.com';
     await nextTick();
-    expect(fields.value.email.$error).toEqual({});
+    expect(fields.value.email.$error).toEqual({ required: false, email: false });
   });
 
   it('should include multiple failing rule keys in $error', async () => {
@@ -2795,7 +2795,7 @@ describe('useFormValidation - $error keyed object', () => {
     await nextTick();
     expect(fields.value.password.$error.min).toBe(true);
     expect(fields.value.password.$error.email).toBe(true);
-    expect(fields.value.password.$error.required).toBeUndefined();
+    expect(fields.value.password.$error.required).toBe(false);
   });
 });
 
@@ -2924,7 +2924,7 @@ describe('useFormValidation - form-level computed state', () => {
     const data = ref({ name: '', email: 'bad' });
     const result = useFormValidation(data, { name: ['required'], email: ['required', 'email'] });
     expect(result.$error.value.name).toEqual({ required: true });
-    expect(result.$error.value.email).toEqual({ email: true });
+    expect(result.$error.value.email).toEqual({ required: false, email: true });
   });
 });
 

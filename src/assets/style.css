@@ -23,10 +23,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -35,10 +32,8 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
 .logo {
@@ -84,4 +79,25 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   text-align: left;
+}
+
+/* ── Validation directive CSS classes ─────────────────────────── */
+input.v-invalid.v-touched,
+textarea.v-invalid.v-touched,
+select.v-invalid.v-touched {
+  border-color: #e74c3c !important;
+  outline-color: #e74c3c;
+}
+
+input.v-valid.v-dirty,
+textarea.v-valid.v-dirty,
+select.v-valid.v-dirty {
+  border-color: #2ecc71 !important;
+  outline-color: #2ecc71;
+}
+
+input.v-pending,
+textarea.v-pending,
+select.v-pending {
+  border-color: #3498db !important;
 }

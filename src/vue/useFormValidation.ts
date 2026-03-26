@@ -84,6 +84,33 @@ function makeInitialFieldState(fieldName: string, isValidState: boolean, errorsL
   }
 }
 
+function fieldsEqual(a: Record<string, FieldState>, b: Record<string, FieldState>): boolean {
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+  for (const key of keysA) {
+    const fa = a[key]
+    const fb = b[key]
+    if (!fb) return false
+    if (
+      fa.$valid !== fb.$valid ||
+      fa.$dirty !== fb.$dirty ||
+      fa.$touched !== fb.$touched ||
+      fa.$pending !== fb.$pending ||
+      fa.errors.length !== fb.errors.length ||
+      fa.errors.some((e, i) => e !== fb.errors[i])
+    ) return false
+    // Compare $error keys
+    const errKeysA = Object.keys(fa.$error)
+    const errKeysB = Object.keys(fb.$error)
+    if (errKeysA.length !== errKeysB.length) return false
+    for (const ek of errKeysA) {
+      if (fa.$error[ek] !== fb.$error[ek]) return false
+    }
+  }
+  return true
+}
+
 class AsyncValidationController {
   private pending = new Map<string, AbortController>()
   private timers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -218,7 +245,7 @@ export default function useFormValidation(
       }
     }
 
-    const overallValid = engineIsValid && Object.keys(merged$error).length === 0
+    const overallValid = engineIsValid && !Object.values(merged$error).some(Boolean)
 
     return {
       isValid: overallValid,
@@ -258,7 +285,11 @@ export default function useFormValidation(
       newFields[fieldName] = buildFieldState(fieldName, fieldIsValid, fieldErrors, fieldErrorsByRule, existingField)
     })
 
-    fields.value = newFields
+    // Only replace fields.value if something actually changed — avoids
+    // unnecessary re-renders that can cascade through directive updated hooks.
+    if (!fieldsEqual(fields.value, newFields)) {
+      fields.value = newFields
+    }
 
     // Run async validators if sync passes
     if (Object.keys(asyncValidators).length > 0) {
@@ -289,7 +320,7 @@ export default function useFormValidation(
                 } else {
                   delete newError[rKey]
                 }
-                const overallValid = current.errors.length === 0 && Object.keys(newError).length === 0
+                const overallValid = current.errors.length === 0 && !Object.values(newError).some(Boolean)
                 fields.value[fName] = {
                   ...current,
                   $pending: false,
@@ -546,7 +577,7 @@ export default function useFormValidation(
       } else {
         delete newError[key]
       }
-      const overallValid = f.errors.length === 0 && Object.keys(newError).length === 0
+      const overallValid = f.errors.length === 0 && !Object.values(newError).some(Boolean)
       fields.value[fieldName] = {
         ...f,
         $error: newError,
@@ -629,7 +660,9 @@ export default function useFormValidation(
         })
 
         errors.value = updatedErrors
-        fields.value = updatedFields
+        if (!fieldsEqual(fields.value, updatedFields)) {
+          fields.value = updatedFields
+        }
 
         const allErrors: string[] = []
         knownFields.value.forEach((field) => {

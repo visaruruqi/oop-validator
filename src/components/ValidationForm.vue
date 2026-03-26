@@ -1,25 +1,25 @@
 <template>
-  <div>
+  <div class="form-wrapper">
     <form @submit.prevent="validateForm">
-      <div>
-        <label for="email">Email:</label>
-        <input id="email" v-model="email" type="text" @keydown="validateEmail"/>
-        <div v-if="errors.email.length" >
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" v-model="email" type="text" @keydown="validateEmail" placeholder="you@example.com" />
+        <div v-if="errors.email.length" class="errors">
           <span v-for="(error, index) in errors.email" :key="index" class="error-item">{{ error }}</span>
         </div>
       </div>
-      <div>
-        <label for="username">Username:</label>
-        <input id="username" v-model="username" type="text"/>
-        <div v-if="errors.username.length">
-          <span v-for="(error, index) in errors.username" class="error-item" :key="index">{{ error }}</span>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" v-model="username" type="text" placeholder="3–15 characters" />
+        <div v-if="errors.username.length" class="errors">
+          <span v-for="(error, index) in errors.username" :key="index" class="error-item">{{ error }}</span>
         </div>
       </div>
-      <div>
-        <label for="city">City:</label>
-        <input id="city" v-model="city" type="text" @keydown="validateCity"/>
-        <div v-if="errors.city.length">
-          <span v-for="(error, index) in errors.city" class="error-item" :key="index">{{ error }}</span>
+      <div class="field">
+        <label for="city">City</label>
+        <input id="city" v-model="city" type="text" @keydown="validateCity" placeholder="Letters only" />
+        <div v-if="errors.city.length" class="errors">
+          <span v-for="(error, index) in errors.city" :key="index" class="error-item">{{ error }}</span>
         </div>
       </div>
       <button type="submit">Submit</button>
@@ -114,37 +114,74 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.form-wrapper {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 0 24px 64px;
+}
+
 form {
   display: flex;
   flex-direction: column;
-  max-width: 400px;
-  margin: auto;
+  gap: 20px;
 }
 
-div {
-  margin-bottom: 16px;
-  text-align: left;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 label {
-  margin-bottom: 4px;
-  margin-right: 10px;
-  width: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5568;
 }
 
 input {
-  padding: 8px;
-  font-size: 16px;
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a202c;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
-span {
-  color: red;
+input:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
+}
+
+.errors {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.error-item {
+  color: #e53e3e;
   font-size: 12px;
 }
 
-button {
-  padding: 8px 16px;
-  font-size: 16px;
+button[type="submit"] {
+  align-self: flex-start;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: background 0.15s;
+}
+
+button[type="submit"]:hover {
+  background: #535bf2;
 }
 </style>
