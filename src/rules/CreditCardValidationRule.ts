@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class CreditCardValidationRule implements IValidationRule {
+export default class CreditCardValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid credit card number.'
 
   private luhnCheck(num: string): boolean {

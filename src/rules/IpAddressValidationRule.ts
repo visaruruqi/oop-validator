@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class IpAddressValidationRule implements IValidationRule {
+export default class IpAddressValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid IP address.'
 
   isValid(param: string): [boolean, string] {

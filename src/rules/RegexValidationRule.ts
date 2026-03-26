@@ -1,10 +1,11 @@
 import IValidationRule from './IValidationRule'
 
-export default class RegexValidationRule implements IValidationRule {
+export default class RegexValidationRule extends IValidationRule {
     private errorMessage: string = 'Field is invalid.'
     private regexString: string = '';
 
     constructor(regex: string) {
+        super()
         this.regexString = regex
     }
 

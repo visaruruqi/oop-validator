@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class UsernameValidationRule implements IValidationRule {
+export default class UsernameValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid username.'
 
   isValid(param: string): [boolean, string] {

@@ -1,6 +1,6 @@
 import IValidationRule from "./IValidationRule";
 
-export default class DomainValidationRule implements IValidationRule {
+export default class DomainValidationRule extends IValidationRule {
     private errorMessage: string = "This field must be a valid domain.";
 
     isValid(param: string): [boolean, string] {

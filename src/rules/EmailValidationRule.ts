@@ -1,6 +1,6 @@
 import IValidationRule from "./IValidationRule";
 
-export default class EmailValidationRule implements IValidationRule {
+export default class EmailValidationRule extends IValidationRule {
     private errorMessage: string = "This field must be a valid email address.";
 
     isValid(param: string): [boolean, string] {

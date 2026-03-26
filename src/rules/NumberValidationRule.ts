@@ -1,6 +1,6 @@
 import IValidationRule from "./IValidationRule";
 
-export default class NumberValidationRule implements IValidationRule {
+export default class NumberValidationRule extends IValidationRule {
     ruleKey: string = 'number';
     private errorMessage: string = "";
 

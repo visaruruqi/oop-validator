@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class PasswordStrengthValidationRule implements IValidationRule {
+export default class PasswordStrengthValidationRule extends IValidationRule {
   private errorMessage = 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.'
 
   isValid(param: string): [boolean, string] {

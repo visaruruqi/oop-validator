@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class CurrencyValidationRule implements IValidationRule {
+export default class CurrencyValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid currency amount.'
 
   isValid(param: string): [boolean, string] {

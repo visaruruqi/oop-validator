@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class DateValidationRule implements IValidationRule {
+export default class DateValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid date.'
 
   isValid(param: string): [boolean, string] {

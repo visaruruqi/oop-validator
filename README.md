@@ -1211,6 +1211,121 @@ useFormValidation(
 
 ---
 
+## AngularJS Migration Guide
+
+`oop-validator` v0.6.0 adds a Vue 3 equivalent of AngularJS's `FormController` — `ng-*` form directives mapped 1:1 to `v-*` directives.
+
+### Before (AngularJS)
+
+```html
+<form name="userForm" ng-submit="save()" novalidate>
+  <input type="text" ng-model="user.name" name="name"
+         ng-required="true" ng-minlength="3" ng-maxlength="50">
+  <div ng-messages="userForm.name.$error"
+       ng-show="userForm.name.$touched || userForm.$submitted">
+    <span ng-message="required">Name is required.</span>
+    <span ng-message="minlength">At least 3 characters.</span>
+  </div>
+
+  <input type="email" ng-model="user.email" name="email" ng-required="true">
+  <div ng-messages="userForm.email.$error"
+       ng-show="userForm.email.$touched || userForm.$submitted">
+    <span ng-message="required">Email is required.</span>
+    <span ng-message="email">Invalid email.</span>
+  </div>
+
+  <button type="submit" ng-disabled="userForm.$invalid">Submit</button>
+</form>
+```
+
+### After (Vue 3 with oop-validator)
+
+```html
+<script setup>
+import { reactive } from 'vue'
+import { useForm } from 'oop-validator'
+
+const user = reactive({ name: '', email: '' })
+const form = useForm('userForm', user)  // ← one line replaces ng-form
+
+function save() { console.log('Saving:', user) }
+</script>
+
+<template>
+  <form name="userForm" v-submit="save">
+    <input type="text" v-model="user.name" name="name"
+           v-required="true" v-minlength="3" v-maxlength="50">
+    <div v-messages="form.name.$error"
+         v-show="form.name.$touched || form.$submitted">
+      <span v-message="'required'">Name is required.</span>
+      <span v-message="'minlength'">At least 3 characters.</span>
+    </div>
+
+    <input type="email" v-model="user.email" name="email" v-required="true" v-type>
+    <div v-messages="form.email.$error"
+         v-show="form.email.$touched || form.$submitted">
+      <span v-message="'required'">Email is required.</span>
+      <span v-message="'email'">Invalid email.</span>
+    </div>
+
+    <button type="submit" :disabled="form.$invalid">Submit</button>
+  </form>
+</template>
+```
+
+### Migration Table
+
+| AngularJS | Vue 3 (oop-validator) | Notes |
+|---|---|---|
+| `ng-form="userForm"` | `useForm('userForm', data)` | One line in `<script setup>` |
+| `ng-submit="save()"` | `v-submit="save"` | Auto-adds `novalidate`, calls `save` only when valid |
+| `ng-required="true"` | `v-required="true"` | Supports dynamic `true`/`false` |
+| `ng-minlength="3"` | `v-minlength="3"` | String length |
+| `ng-maxlength="50"` | `v-maxlength="50"` | String length |
+| `ng-pattern="/regex/"` | `v-pattern="/regex/"` | String or RegExp |
+| `ng-min="18"` | `v-min="18"` | Numeric value (not length) |
+| `ng-max="120"` | `v-max="120"` | Numeric value (not length) |
+| `<input type="email" ng-model>` | `v-type` on `<input type="email">` | Infers email/url/number/date rule |
+| `ng-messages="form.name.$error"` | `v-messages="form.name.$error"` | Container directive |
+| `ng-message="required"` | `v-message="'required'"` | Value is a quoted string |
+| `userForm.name.$error` | `form.name.$error` | Via Proxy on `useForm` result |
+| `userForm.$submitted` | `form.$submitted` (Ref) | |
+| `userForm.$valid` | `form.$valid` (ComputedRef) | |
+| `userForm.$invalid` | `form.$invalid` (ComputedRef) | |
+| `userForm.$pristine` | `form.$pristine` (ComputedRef) | |
+| `userForm.$dirty` | `form.$dirty` (ComputedRef) | |
+| `userForm.$setPristine()` | `form.$setPristine()` | |
+| `$setValidity('key', bool)` | `form.$setValidity('field', 'key', bool)` | Server errors etc. |
+
+### Install the Plugin
+
+```ts
+// main.ts
+import { createApp } from 'vue'
+import { VValidationPlugin } from 'oop-validator'
+import App from './App.vue'
+
+createApp(App).use(VValidationPlugin).mount('#app')
+```
+
+### Key Differences from AngularJS
+
+1. **One setup line**: `const form = useForm('userForm', user)` in `<script setup>` — AngularJS did this implicitly via `ng-form`
+2. **`v-type` for type inference**: AngularJS inferred validation from `type=""` automatically. In Vue 3, add `v-type` to inputs with `type="email"`, `type="number"`, etc.
+3. **Quoted string values**: `v-message="'required'"` (quoted) vs `ng-message="required"` (bare)
+4. **Ref access**: `form.$submitted.value` in `<script setup>`, but just `form.$submitted` in templates (Vue auto-unwraps refs in templates)
+
+### Numeric Validation
+
+For `<input type="number">` fields use `v-min` / `v-max` (numeric value) instead of `v-minlength` / `v-maxlength` (string length):
+
+```html
+<input type="number" v-model.number="user.age" name="age"
+       v-required="true" v-min="18" v-max="120">
+```
+
+---
+
 ## HMR Compatibility
 
 oop-validator is fully compatible with Vite's Hot Module Reload (HMR) and other modern bundlers (Webpack, Rollup, etc.). Vue is externalized from the bundle — it is only required as a peer dependency when using the Vue composables.

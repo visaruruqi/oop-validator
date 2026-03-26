@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class SocialSecurityValidationRule implements IValidationRule {
+export default class SocialSecurityValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid SSN.'
 
   isValid(param: string): [boolean, string] {

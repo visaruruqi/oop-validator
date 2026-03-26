@@ -1,5 +1,5 @@
 import { Ref, ref, watch, computed, unref, ComputedRef } from 'vue'
-import FormValidationEngine, { FormConfig, FormValidationResult, FieldRules } from '../form/FormValidationEngine'
+import FormValidationEngine, { FormConfig, FormValidationResult } from '../form/FormValidationEngine'
 import IValidationRule from '../rules/IValidationRule'
 
 export interface UseFormValidationOptions {

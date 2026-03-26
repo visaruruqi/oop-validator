@@ -5,13 +5,14 @@ import IValidationRule from './IValidationRule'
  * The other field value is provided via a function so the rule can access
  * the latest form state when validation runs.
  */
-export default class MatchFieldValidationRule implements IValidationRule {
+export default class MatchFieldValidationRule extends IValidationRule {
   private otherFieldGetter: (() => any) | null = null
   private otherFieldName?: string
   private context: Record<string, any> = {}
   private errorMessage = 'Fields do not match.'
 
   constructor(getterOrField?: (() => any) | string) {
+    super()
     if (typeof getterOrField === 'function') {
       this.otherFieldGetter = getterOrField
     } else if (typeof getterOrField === 'string') {

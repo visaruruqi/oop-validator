@@ -1,6 +1,6 @@
 import IValidationRule from "./IValidationRule";
 
-export default class NumericMinValidationRule implements IValidationRule {
+export default class NumericMinValidationRule extends IValidationRule {
     ruleKey: string = 'min';
     private minValue: number = 0;
     private errorMessage: string = "";

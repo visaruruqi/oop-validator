@@ -13,10 +13,10 @@ export function computeFieldClasses(field: Partial<FieldState>): Record<string, 
   const classes: Record<string, boolean> = {
     'v-valid': field.$valid ?? field.isValid ?? true,
     'v-invalid': field.$invalid ?? !(field.isValid ?? true),
-    'v-pristine': field.$pristine ?? !field.isDirty ?? true,
+    'v-pristine': field.$pristine ?? (field.isDirty != null ? !field.isDirty : true),
     'v-dirty': field.$dirty ?? field.isDirty ?? false,
     'v-touched': field.$touched ?? field.isTouched ?? false,
-    'v-untouched': field.$untouched ?? !field.isTouched ?? true,
+    'v-untouched': field.$untouched ?? (field.isTouched != null ? !field.isTouched : true),
     'v-pending': field.$pending ?? false,
   }
 

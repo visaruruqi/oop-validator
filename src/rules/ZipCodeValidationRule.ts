@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class ZipCodeValidationRule implements IValidationRule {
+export default class ZipCodeValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid ZIP code.'
 
   isValid(param: string): [boolean, string] {

@@ -1,6 +1,6 @@
 import IValidationRule from "./IValidationRule";
 
-export default class MaxValidationRule implements IValidationRule {
+export default class MaxValidationRule extends IValidationRule {
     private maxLength: number = Infinity;
     private errorMessage: string = "";
 

@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class BankAccountValidationRule implements IValidationRule {
+export default class BankAccountValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid bank account number.'
 
   isValid(param: string): [boolean, string] {

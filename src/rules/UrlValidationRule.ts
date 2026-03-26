@@ -1,6 +1,6 @@
 import IValidationRule from './IValidationRule'
 
-export default class UrlValidationRule implements IValidationRule {
+export default class UrlValidationRule extends IValidationRule {
   private errorMessage = 'This field must be a valid URL.'
 
   isValid(param: string): [boolean, string] {

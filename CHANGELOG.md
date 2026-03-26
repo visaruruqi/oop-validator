@@ -6,6 +6,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-26
+
+### Added — AngularJS Migration Layer
+
+This release adds a full AngularJS `ng-form` / `FormController` equivalent for Vue 3, letting you migrate AngularJS forms to Vue 3 with minimal code changes.
+
+#### Core Engine
+- **`ruleKey` property on `IValidationRule`** — all rule instances now carry a key used for per-rule error tracking
+- **`ValidationEngine.removeRule(key)`** — remove a rule from an engine at runtime
+- **`ValidationEngine.validateValue()` returns `errorsByRule`** — `{ required: true, email: true }` alongside existing `errors[]`
+- **`addRule(key, instance)` overload** — register a rule under a custom key
+- **`FormValidationEngine` extensions**: `removeRuleFromField()`, `addField()`, `removeField()`, `getFieldEngine()`
+- **`FormValidationResult.fieldErrorsByRule`** — per-field keyed error map in all `validate()` results
+
+#### New Validation Rules
+- **`NumericMinValidationRule`** — validates `Number(value) >= min` (maps to `v-min`)
+- **`NumericMaxValidationRule`** — validates `Number(value) <= max` (maps to `v-max`)
+- **`NumberValidationRule`** — validates that value is a valid number (maps to `v-type` on `type="number"`)
+
+#### Vue Composable Extensions
+- **Extended `FieldState`** — new properties: `$error`, `$valid`, `$invalid`, `$pristine`, `$dirty`, `$touched`, `$untouched`, `$pending`, `$name`
+- **Form-level computed** — `$valid`, `$invalid`, `$pristine`, `$dirty`, `$pending`, `$error` aggregated from all fields
+- **`$submitted`** — tracks whether the form has been submitted
+- **`$submit(callback)`** — validates form, touchesAll, calls callback only when valid
+- **`$validate()`** — programmatic full validation including async, returns `Promise<boolean>`
+- **`$setPristine()`**, **`$setUntouched()`**, **`$setDirty()`** — state manipulation
+- **`$setValidity(field, key, isValid)`** — manually inject/clear validation keys (server-side errors)
+- **`$reset(values?)`** — reset form state with optional new values
+- **`registerRule / unregisterRule / registerField / unregisterField`** — directive-friendly runtime API
+- **Async validator support** — `asyncValidators` option with debounce and AbortController cancellation
+- **`cssClasses` computed** — form-level CSS class object
+
+#### New `useForm()` Composable
+- **`useForm(name, data, options?)`** — wraps `useFormValidation` with a Proxy for AngularJS-style access
+- `form.email.$error` instead of `form.fields.value.email.$error`
+- Auto-registers/deregisters in `formRegistry` on mount/unmount
+- Integrates with `v-*` directives via module-level WeakMap registry
+
+#### Vue Directives
+- **`v-required`** — `RequiredValidationRule`, supports dynamic `true`/`false` toggle
+- **`v-minlength`** — `MinValidationRule` (string length)
+- **`v-maxlength`** — `MaxValidationRule` (string length)
+- **`v-pattern`** — `RegexValidationRule`, accepts string or `/regex/` syntax
+- **`v-min`** — `NumericMinValidationRule` (numeric value)
+- **`v-max`** — `NumericMaxValidationRule` (numeric value)
+- **`v-type`** — dispatches email/url/date/number rules from `input[type]`
+- **`v-messages`** — error message container, shows first match by default, `.multiple` modifier to show all
+- **`v-message`** — per-rule error span, auto-shows/hides based on `$error`
+- **`v-submit`** — intercepts form submit, auto-adds `novalidate`, calls `form.$submit(callback)`
+- **`v-form-group`** — group container marker
+- **`VValidationPlugin`** — Vue plugin for `app.use(VValidationPlugin)` to register all directives
+
+#### Shared FieldController Architecture
+- One blur + one input listener per `<input>` element, shared across all directives on that element
+- Checkbox/radio/select use `change` listener
+- Reference-counted cleanup — listeners removed when all directives unmount
+- WeakMap-based storage (no memory leaks)
+
+#### CSS Class Utilities
+- **`computeFieldClasses(field)`** — returns `{ 'v-valid': true, 'v-invalid': false, ... }` for `:class` bindings
+- **`computeFormClasses(state)`** — form-level class object including `v-submitted`
+- Per-rule classes: `v-valid-required`, `v-invalid-email`, etc.
+
+### Fixed
+- **`RequiredValidationRule`** now correctly handles non-string types:
+  - `number 0` → valid (was incorrectly `false`)
+  - `boolean true` → valid (checked checkbox)
+  - `boolean false` → invalid (unchecked checkbox)
+  - `NaN` → invalid
+  - `Array` → valid if non-empty, invalid if empty
+  - All existing string behavior unchanged
+
+### Zero Breaking Changes
+All 142 existing tests pass unchanged. New `errorsByRule` property on `validateValue()` is additive and ignored by existing destructuring. All existing `FieldState` properties preserved.
+
 ## [0.5.6] - 2025-12-19
 ### Fixed
 - **Reset with Custom Validation Rules**: Fixed issue where `reset()` would not properly clear errors when called after changing form values
