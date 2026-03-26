@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { ref, nextTick, reactive, computed, readonly } from 'vue'
 import useFormValidation from './useFormValidation'
 import MatchFieldValidationRule from '../rules/MatchFieldValidationRule'
@@ -2755,3 +2755,340 @@ describe('useFormValidation - custom validation rules', () => {
     expect(fields.value.email.errors.length).toBeGreaterThan(0)
   })
 })
+
+describe('useFormValidation - $error keyed object', () => {
+  it('should populate $error with failing rule keys', async () => {
+    const data = ref({ email: '' });
+    const { fields } = useFormValidation(data, { email: ['required', 'email'] });
+    await nextTick();
+    expect(fields.value.email.$error).toEqual({ required: true });
+  });
+
+  it('should have empty $error when field is valid', async () => {
+    const data = ref({ email: 'test@example.com' });
+    const { fields } = useFormValidation(data, { email: ['required', 'email'] });
+    await nextTick();
+    expect(fields.value.email.$error).toEqual({});
+  });
+
+  it('should update $error reactively when value changes', async () => {
+    const data = ref({ email: '' });
+    const { fields } = useFormValidation(data, { email: ['required', 'email'] });
+    await nextTick();
+    expect(fields.value.email.$error.required).toBe(true);
+
+    data.value.email = 'bad';
+    await nextTick();
+    expect(fields.value.email.$error.required).toBeUndefined();
+    expect(fields.value.email.$error.email).toBe(true);
+
+    data.value.email = 'good@test.com';
+    await nextTick();
+    expect(fields.value.email.$error).toEqual({});
+  });
+
+  it('should include multiple failing rule keys in $error', async () => {
+    const data = ref({ password: 'a' });
+    const { fields } = useFormValidation(data, {
+      password: ['required', { rule: 'min', params: { length: 8 } }, 'email']
+    });
+    await nextTick();
+    expect(fields.value.password.$error.min).toBe(true);
+    expect(fields.value.password.$error.email).toBe(true);
+    expect(fields.value.password.$error.required).toBeUndefined();
+  });
+});
+
+describe('useFormValidation - AngularJS state aliases', () => {
+  it('$pristine should be inverse of isDirty', async () => {
+    const data = ref({ name: 'initial' });
+    const { fields } = useFormValidation(data, { name: ['required'] });
+    expect(fields.value.name.$pristine).toBe(true);
+    expect(fields.value.name.$dirty).toBe(false);
+
+    data.value.name = 'changed';
+    await nextTick();
+    expect(fields.value.name.$pristine).toBe(false);
+    expect(fields.value.name.$dirty).toBe(true);
+  });
+
+  it('$untouched should be inverse of $touched', () => {
+    const data = ref({ name: '' });
+    const { fields, touch } = useFormValidation(data, { name: ['required'] });
+    expect(fields.value.name.$untouched).toBe(true);
+    expect(fields.value.name.$touched).toBe(false);
+
+    touch('name');
+    expect(fields.value.name.$untouched).toBe(false);
+    expect(fields.value.name.$touched).toBe(true);
+  });
+
+  it('$invalid should be inverse of $valid', () => {
+    const data = ref({ name: '' });
+    const { fields } = useFormValidation(data, { name: ['required'] });
+    expect(fields.value.name.$valid).toBe(false);
+    expect(fields.value.name.$invalid).toBe(true);
+  });
+
+  it('$name should match the field key', () => {
+    const data = ref({ email: '' });
+    const { fields } = useFormValidation(data, { email: ['required'] });
+    expect(fields.value.email.$name).toBe('email');
+  });
+});
+
+describe('useFormValidation - $submitted and $submit', () => {
+  it('$submitted should be false initially', () => {
+    const data = ref({ name: '' });
+    const result = useFormValidation(data, { name: ['required'] });
+    expect(result.$submitted.value).toBe(false);
+  });
+
+  it('$submit should set $submitted to true', async () => {
+    const data = ref({ name: '' });
+    const result = useFormValidation(data, { name: ['required'] });
+    const callback = vi.fn();
+    await result.$submit(callback);
+    expect(result.$submitted.value).toBe(true);
+  });
+
+  it('$submit should NOT call callback when form is invalid', async () => {
+    const data = ref({ name: '' });
+    const result = useFormValidation(data, { name: ['required'] });
+    const callback = vi.fn();
+    await result.$submit(callback);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('$submit should call callback when form is valid', async () => {
+    const data = ref({ name: 'John' });
+    const result = useFormValidation(data, { name: ['required'] });
+    const callback = vi.fn();
+    await result.$submit(callback);
+    expect(callback).toHaveBeenCalledOnce();
+  });
+
+  it('$submit should touchAll so all errors become visible', async () => {
+    const data = ref({ name: '', email: '' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    await result.$submit(vi.fn());
+    expect(result.fields.value.name.isTouched).toBe(true);
+    expect(result.fields.value.email.isTouched).toBe(true);
+  });
+
+  it('$setPristine should reset $submitted and all field dirty/touched state', async () => {
+    const data = ref({ name: 'test' });
+    const result = useFormValidation(data, { name: ['required'] });
+    result.touch('name');
+    await result.$submit(vi.fn());
+    expect(result.$submitted.value).toBe(true);
+
+    result.$setPristine();
+    expect(result.$submitted.value).toBe(false);
+    expect(result.fields.value.name.$pristine).toBe(true);
+    expect(result.fields.value.name.$untouched).toBe(true);
+  });
+});
+
+describe('useFormValidation - form-level computed state', () => {
+  it('form.$valid should be true when all fields valid', () => {
+    const data = ref({ name: 'John', email: 'j@test.com' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required', 'email'] });
+    expect(result.$valid.value).toBe(true);
+    expect(result.$invalid.value).toBe(false);
+  });
+
+  it('form.$valid should be false when any field invalid', () => {
+    const data = ref({ name: '', email: 'j@test.com' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    expect(result.$valid.value).toBe(false);
+    expect(result.$invalid.value).toBe(true);
+  });
+
+  it('form.$pristine should be true when all fields pristine', () => {
+    const data = ref({ name: 'a', email: 'b' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    expect(result.$pristine.value).toBe(true);
+    expect(result.$dirty.value).toBe(false);
+  });
+
+  it('form.$dirty should be true when any field is dirty', async () => {
+    const data = ref({ name: 'a', email: 'b' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    data.value.name = 'changed';
+    await nextTick();
+    expect(result.$dirty.value).toBe(true);
+  });
+
+  it('form.$error should aggregate all field errors', () => {
+    const data = ref({ name: '', email: 'bad' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required', 'email'] });
+    expect(result.$error.value.name).toEqual({ required: true });
+    expect(result.$error.value.email).toEqual({ email: true });
+  });
+});
+
+describe('useFormValidation - $setValidity', () => {
+  it('should manually set a validity key on a field', () => {
+    const data = ref({ email: 'test@test.com' });
+    const result = useFormValidation(data, { email: ['required', 'email'] });
+    result.$setValidity('email', 'uniqueEmail', false);
+    expect(result.fields.value.email.$error.uniqueEmail).toBe(true);
+    expect(result.fields.value.email.$valid).toBe(false);
+  });
+
+  it('should clear a manually set validity key', () => {
+    const data = ref({ email: 'test@test.com' });
+    const result = useFormValidation(data, { email: ['required', 'email'] });
+    result.$setValidity('email', 'uniqueEmail', false);
+    result.$setValidity('email', 'uniqueEmail', true);
+    expect(result.fields.value.email.$error.uniqueEmail).toBeUndefined();
+    expect(result.fields.value.email.$valid).toBe(true);
+  });
+});
+
+describe('useFormValidation - registerRule / unregisterRule (for directives)', () => {
+  it('registerRule should create field if it does not exist', async () => {
+    const data = ref({ name: '' });
+    const result = useFormValidation(data, {}, { validateOnMount: false });
+    result.registerRule('name', 'required', new (await import('../rules/RequiredValidationRule')).default());
+    result.validate();
+    await nextTick();
+    expect(result.fields.value.name).toBeDefined();
+    expect(result.fields.value.name.$error.required).toBe(true);
+  });
+
+  it('unregisterRule should remove a rule from a field', async () => {
+    const data = ref({ email: '' });
+    const result = useFormValidation(data, {}, { validateOnMount: false });
+    const RequiredValidationRule = (await import('../rules/RequiredValidationRule')).default;
+    const EmailValidationRule = (await import('../rules/EmailValidationRule')).default;
+    const reqRule = new RequiredValidationRule();
+    reqRule.ruleKey = 'required';
+    const emailRule = new EmailValidationRule();
+    emailRule.ruleKey = 'email';
+    result.registerRule('email', 'required', reqRule);
+    result.registerRule('email', 'email', emailRule);
+    result.unregisterRule('email', 'required');
+    result.validate();
+    await nextTick();
+    expect(result.fields.value.email.$error.required).toBeUndefined();
+  });
+
+  it('unregisterField should remove field entirely from state', () => {
+    const data = ref({ email: '' });
+    const result = useFormValidation(data, {}, { validateOnMount: false });
+    result.registerField('email');
+    result.unregisterField('email');
+    expect(result.fields.value.email).toBeUndefined();
+  });
+});
+
+describe('useFormValidation - state manipulation methods', () => {
+  it('$setDirty should set all fields to dirty', () => {
+    const data = ref({ name: 'initial' });
+    const result = useFormValidation(data, { name: ['required'] });
+    expect(result.$dirty.value).toBe(false);
+    result.$setDirty();
+    expect(result.$dirty.value).toBe(true);
+    expect(result.fields.value.name.$dirty).toBe(true);
+  });
+
+  it('$setUntouched should reset all fields to untouched', () => {
+    const data = ref({ name: '', email: '' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    result.touch('name');
+    result.touch('email');
+    expect(result.fields.value.name.$touched).toBe(true);
+    result.$setUntouched();
+    expect(result.fields.value.name.$untouched).toBe(true);
+    expect(result.fields.value.email.$untouched).toBe(true);
+  });
+});
+
+describe('useFormValidation - $validate', () => {
+  it('should validate all fields and return Promise<boolean>', async () => {
+    const data = ref({ name: '', email: '' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required'] });
+    const isValid = await result.$validate();
+    expect(isValid).toBe(false);
+  });
+
+  it('should return true when all fields valid', async () => {
+    const data = ref({ name: 'John', email: 'j@t.com' });
+    const result = useFormValidation(data, { name: ['required'], email: ['required', 'email'] });
+    const isValid = await result.$validate();
+    expect(isValid).toBe(true);
+  });
+});
+
+describe('useFormValidation - $reset extended', () => {
+  it('should reset $submitted to false', async () => {
+    const data = ref({ name: 'test' });
+    const result = useFormValidation(data, { name: ['required'] });
+    await result.$submit(vi.fn());
+    expect(result.$submitted.value).toBe(true);
+    result.$reset();
+    await nextTick();
+    expect(result.$submitted.value).toBe(false);
+  });
+
+  it('should reset all $touched to false', async () => {
+    const data = ref({ name: '' });
+    const result = useFormValidation(data, { name: ['required'] });
+    result.touch('name');
+    expect(result.fields.value.name.$touched).toBe(true);
+    result.$reset();
+    await nextTick();
+    expect(result.fields.value.name.$touched).toBe(false);
+  });
+});
+
+describe('useFormValidation - async validation', () => {
+  it('should set $pending while async validator runs', async () => {
+    let resolveValidator: (v: boolean) => void = () => {};
+    const asyncPromise = new Promise<boolean>(r => { resolveValidator = r })
+
+    const data = ref({ email: 'test@test.com' });
+    const result = useFormValidation(data, { email: ['required'] }, {
+      asyncValidators: { email: { unique: () => asyncPromise } },
+      validateOnMount: true,
+      debounce: 0,
+    });
+
+    await nextTick();
+    // Give the async validator time to start
+    await new Promise(r => setTimeout(r, 10));
+    expect(result.fields.value.email.$pending).toBe(true);
+
+    resolveValidator(true);
+    await new Promise(r => setTimeout(r, 50));
+    await nextTick();
+    expect(result.fields.value.email.$pending).toBe(false);
+  });
+
+  it('should add async error key to $error on failure', async () => {
+    const data = ref({ email: 'taken@test.com' });
+    const result = useFormValidation(data, { email: ['required'] }, {
+      asyncValidators: { email: { unique: async () => false } },
+      validateOnMount: true,
+      debounce: 0,
+    });
+    await new Promise(r => setTimeout(r, 50));
+    await nextTick();
+    expect(result.fields.value.email.$error.unique).toBe(true);
+  });
+
+  it('should NOT run async validators if sync validators fail', async () => {
+    const asyncFn = vi.fn().mockResolvedValue(true);
+    const data = ref({ email: '' });
+    const result = useFormValidation(data, { email: ['required'] }, {
+      asyncValidators: { email: { unique: asyncFn } },
+      validateOnMount: true,
+      debounce: 0,
+    });
+    await nextTick();
+    await new Promise(r => setTimeout(r, 20));
+    expect(asyncFn).not.toHaveBeenCalled();
+  });
+});

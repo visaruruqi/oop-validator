@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n '```' /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/README.md)",
+      "Bash(grep -n '^```' /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/README.md)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebSearch",
+      "Bash(grep -n \"NEW\\\\|Max 10 tags\\\\|{ errors, isValid }\\\\|socialSecurity.*socialSecurity\\\\|passwordStrength\\\\|ipAddress\\\\b\\\\|matchField\\\\b\\\\|fieldName.*password\" /Users/visaruruqi/Desktop/projects/visaruruqi/oop-validator/README.md)",
+      "Bash(npm test)"
+    ]
+  }
+}

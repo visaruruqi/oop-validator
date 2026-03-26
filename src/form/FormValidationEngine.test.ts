@@ -198,3 +198,57 @@ describe('FormValidationEngine - custom rules', () => {
     expect(result3.fieldErrors.email).toEqual([])
   })
 })
+
+describe('FormValidationEngine - new methods', () => {
+  it('removeRuleFromField should remove a specific rule from a field', () => {
+    const engine = new FormValidationEngine({
+      email: ['required', 'email']
+    });
+    engine.removeRuleFromField('email', 'required');
+    const result = engine.validate({ email: '' });
+    expect(result.fieldErrors.email).toEqual([]);
+  });
+
+  it('addField should add a new field dynamically', () => {
+    const engine = new FormValidationEngine({ name: ['required'] });
+    engine.addField('email', ['required', 'email']);
+    const result = engine.validate({ name: 'test', email: '' });
+    expect(result.fieldErrors.email.length).toBeGreaterThan(0);
+  });
+
+  it('removeField should remove a field entirely', () => {
+    const engine = new FormValidationEngine({ name: ['required'], email: ['required'] });
+    engine.removeField('email');
+    const result = engine.validate({ name: 'test' });
+    expect(result.fieldErrors.email).toBeUndefined();
+    expect(result.isValid).toBe(true);
+  });
+
+  it('getFieldEngine should return the ValidationEngine for a field', () => {
+    const engine = new FormValidationEngine({ email: ['required'] });
+    const fieldEngine = engine.getFieldEngine('email');
+    expect(fieldEngine).toBeDefined();
+    expect(fieldEngine?.getRules().length).toBe(1);
+  });
+
+  it('getFieldEngine should return undefined for non-existent field', () => {
+    const engine = new FormValidationEngine({ email: ['required'] });
+    expect(engine.getFieldEngine('name')).toBeUndefined();
+  });
+
+  it('validate should include fieldErrorsByRule in result', () => {
+    const engine = new FormValidationEngine({
+      email: ['required', 'email'],
+      name: ['required']
+    });
+    const result = engine.validate({ email: 'bad', name: '' });
+    expect(result.fieldErrorsByRule.email).toEqual({ email: true });
+    expect(result.fieldErrorsByRule.name).toEqual({ required: true });
+  });
+
+  it('fieldErrorsByRule should be empty objects for valid fields', () => {
+    const engine = new FormValidationEngine({ name: ['required'] });
+    const result = engine.validate({ name: 'John' });
+    expect(result.fieldErrorsByRule.name).toEqual({});
+  });
+});

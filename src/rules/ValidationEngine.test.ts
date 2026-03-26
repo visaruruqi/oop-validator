@@ -149,20 +149,102 @@ describe('ValidationEngine - Stateful API', () => {
     
     it('should not affect returned results from validateValue', () => {
         const validationEngine = new ValidationEngine(['required']);
-        
+
         // Validate
         const result1 = validationEngine.validateValue('');
         expect(result1.isValid).toBe(false);
-        
+
         // Reset
         validationEngine.reset();
-        
+
         // Previous result should not be affected
         expect(result1.isValid).toBe(false);
         expect(result1.errors.length).toBeGreaterThan(0);
-        
+
         // But state should be reset
         expect(validationEngine.getIsValid()).toBe(true);
         expect(validationEngine.getErrors()).toEqual([]);
     });
+});
+
+describe('ValidationEngine - ruleKey tracking', () => {
+  it('should track ruleKey when adding rules by string name', () => {
+    const engine = new ValidationEngine(['required', 'email']);
+    const result = engine.validateValue('');
+    expect(result.errorsByRule).toEqual({ required: true });
+  });
+
+  it('should track ruleKey when adding rules by config object', () => {
+    const engine = new ValidationEngine([
+      { rule: 'min', params: { length: 5 }, message: 'Too short' }
+    ]);
+    const result = engine.validateValue('ab');
+    expect(result.errorsByRule).toEqual({ min: true });
+  });
+
+  it('should track ruleKey when adding IValidationRule instance with ruleKey set', () => {
+    const rule = new RequiredValidationRule();
+    rule.ruleKey = 'required';
+    const engine = new ValidationEngine();
+    engine.addRule(rule);
+    const result = engine.validateValue('');
+    expect(result.errorsByRule).toEqual({ required: true });
+  });
+
+  it('should track ruleKey with addRule(key, ruleInstance) overload', () => {
+    const engine = new ValidationEngine();
+    const rule = new RequiredValidationRule();
+    engine.addRule('myCustom', rule);
+    const result = engine.validateValue('');
+    expect(result.errorsByRule).toEqual({ myCustom: true });
+  });
+
+  it('should return empty errorsByRule when all rules pass', () => {
+    const engine = new ValidationEngine(['required', 'email']);
+    const result = engine.validateValue('test@example.com');
+    expect(result.errorsByRule).toEqual({});
+  });
+
+  it('should return multiple keys in errorsByRule when multiple rules fail', () => {
+    const engine = new ValidationEngine([
+      'required',
+      { rule: 'min', params: { length: 10 } },
+      'email'
+    ]);
+    const result = engine.validateValue('ab');
+    expect(result.errorsByRule.min).toBe(true);
+    expect(result.errorsByRule.email).toBe(true);
+    expect(result.errorsByRule.required).toBeUndefined();
+  });
+
+  it('should still return errors as string[] (backward compat)', () => {
+    const engine = new ValidationEngine(['required']);
+    const result = engine.validateValue('');
+    expect(Array.isArray(result.errors)).toBe(true);
+    expect(result.errors[0]).toBe('This field is required.');
+  });
+});
+
+describe('ValidationEngine - removeRule', () => {
+  it('should remove a rule by key', () => {
+    const engine = new ValidationEngine(['required', 'email']);
+    engine.removeRule('required');
+    const result = engine.validateValue('');
+    expect(result.isValid).toBe(true);
+  });
+
+  it('should be a no-op for non-existent key', () => {
+    const engine = new ValidationEngine(['required']);
+    engine.removeRule('nonexistent');
+    const result = engine.validateValue('');
+    expect(result.isValid).toBe(false);
+  });
+
+  it('should allow re-adding a removed rule', () => {
+    const engine = new ValidationEngine(['required']);
+    engine.removeRule('required');
+    expect(engine.validateValue('').isValid).toBe(true);
+    engine.addRule('required');
+    expect(engine.validateValue('').isValid).toBe(false);
+  });
 });

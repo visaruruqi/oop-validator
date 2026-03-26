@@ -1,0 +1,22 @@
+Read all spec files in docs/specs/ — start with vue3-angularjs-validation-prompt.md, then test-specification.md, then gap-addendum.md, then internal-lifecycle-reference.ts.
+
+Execute all 5 phases sequentially:
+
+Phase 0: Verify we're on branch feature/vue-directives-angularjs-migration. If not, create it from master.
+
+Phase 1 — Core engine: Add ruleKey to IValidationRule. Add parallel Map to ValidationEngine for key tracking. Add removeRule(). Extend validateValue() return with errorsByRule. Fix RequiredValidationRule for non-string types. Create NumericMinValidationRule, NumericMaxValidationRule, NumberValidationRule. Register them in ValidationEngine switch. Add removeRuleFromField, addField, removeField, getFieldEngine to FormValidationEngine. Extend FormValidationResult with fieldErrorsByRule.
+→ Run npx vitest run. Fix any failures. All 136 existing tests must pass. Commit: "feat: Phase 1 - core engine ruleKey tracking, removeRule, errorsByRule, RequiredValidationRule fix, numeric rules"
+
+Phase 2 — Vue composable: Extend FieldState with $error, $pristine, $dirty, $touched, $untouched, $valid, $invalid, $pending, $name. Create useForm() composable with Proxy for form.fieldName.$error access. Add $submitted, $submit, $validate, $setPristine, $setUntouched, $setDirty, $setValidity, $reset. Add registerRule/unregisterRule/registerField/unregisterField for directive communication. Add async validation support with debounce and cancellation. Create cssClasses.ts utility. Register form in WeakMap on onMounted, clean up on onUnmounted.
+→ Run npx vitest run. Fix any failures. Commit: "feat: Phase 2 - useForm composable with AngularJS-compatible state, async validation, CSS classes"
+
+Phase 3 — Directives: Create registry.ts with WeakMaps. Create shared FieldController pattern (one blur+input listener per element regardless of directive count). Create all directives: vRequired, vMinlength, vMaxlength, vPattern, vMin, vMax, vType, vMessages, vMessage, vSubmit, vFormGroup. Create install.ts plugin. Each directive follows the lifecycle contract: mounted registers rule + ensures field controller, updated handles value changes, unmounted unregisters rule + releases field controller. v-submit auto-adds novalidate. Handle checkbox/radio/select with change event. Check el.disabled. Export everything from index.ts.
+→ Run npx vitest run. Fix any failures. Commit: "feat: Phase 3 - Vue directives v-required, v-minlength, v-maxlength, v-pattern, v-min, v-max, v-type, v-messages, v-message, v-submit, v-form-group"
+
+Phase 4 — Tests: Follow test-specification.md and gap-addendum.md. Write tests for all new code. Add jsdom to devDependencies. Update vitest.config.ts with environmentMatchGlobs for directive tests. Write: core engine tests (ruleKey, removeRule, errorsByRule), RequiredValidationRule non-string tests, new rule tests, FormValidationEngine extension tests, useFormValidation $error/$submitted/$submit tests, useForm Proxy tests, cssClasses tests, every directive test, fieldController tests, registry tests, integration tests (form lifecycle, dynamic fields, slots, async validation, memory leaks, backward compatibility, multiple forms, radio/select, disabled inputs).
+→ Run npx vitest run. ALL tests must pass. Run npx vitest run --coverage. Commit: "test: Phase 4 - comprehensive test suite, ~400 tests"
+
+Phase 5 — Docs: Update README.md with AngularJS migration guide section showing before/after examples. Update CHANGELOG.md with 0.6.0 entry listing all new features. Bump version in package.json to 0.6.0. Run npm run build to verify the build succeeds.
+→ Commit: "docs: Phase 5 - README migration guide, CHANGELOG, version bump 0.6.0"
+
+After all phases: run npx vitest run one final time, then run npm run build. Report the final test count, pass/fail status, and build status.
