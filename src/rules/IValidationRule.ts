@@ -2,6 +2,8 @@
  * Interface for a validation rule.
  */
 export default class IValidationRule {
+    ruleKey: string = ''
+
     /**
      * Validates the provided parameter.
      * @param param - The value to be validated.

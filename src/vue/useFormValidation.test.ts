@@ -1237,12 +1237,14 @@ describe('useFormValidation - changed strategy with null/empty initial values', 
     await nextTick()
     expect(isValid.value).toBe(true)
 
-    // Change acceptTerms - will fail validation because RequiredValidationRule expects string
+    // Change acceptTerms to boolean true
+    // NOTE: Updated behavior — boolean true now passes RequiredValidationRule (represents checked checkbox)
+    // See spec: vue3-angularjs-validation-prompt.md RequiredValidationRule fix
     formData.value.acceptTerms = true
     await nextTick()
 
-    // Boolean true doesn't pass RequiredValidationRule (expects string)
-    expect(fields.value.acceptTerms.isValid).toBe(false)
+    // boolean true passes RequiredValidationRule as of Phase 1 fix
+    expect(fields.value.acceptTerms.isValid).toBe(true)
     expect(fields.value.acceptTerms.isDirty).toBe(true)
     
     // newsletter not changed yet

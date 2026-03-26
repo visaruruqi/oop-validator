@@ -7,6 +7,7 @@ export type FormConfig = Record<string, FieldRules>
 export interface FormValidationResult {
   isValid: boolean
   fieldErrors: Record<string, string[]>
+  fieldErrorsByRule: Record<string, Record<string, boolean>>
   summary: string[]
 }
 
@@ -21,6 +22,7 @@ export default class FormValidationEngine {
 
   validate(values: Record<string, any>): FormValidationResult {
     const fieldErrors: Record<string, string[]> = {}
+    const fieldErrorsByRule: Record<string, Record<string, boolean>> = {}
     const summary: string[] = []
 
     Object.entries(this.engines).forEach(([field, engine]) => {
@@ -33,6 +35,7 @@ export default class FormValidationEngine {
       const fieldValue = values[field] !== undefined ? values[field] : ''
       const result = engine.validateValue(fieldValue)
       fieldErrors[field] = result.errors
+      fieldErrorsByRule[field] = result.errorsByRule
       if (!result.isValid) {
         summary.push(...result.errors.map(err => `${field}: ${err}`))
       }
@@ -41,25 +44,18 @@ export default class FormValidationEngine {
     return {
       isValid: summary.length === 0,
       fieldErrors,
+      fieldErrorsByRule,
       summary
     }
   }
 
-  /**
-   * Validate a single field
-   * @param fieldName - The name of the field to validate
-   * @param value - The value to validate
-   * @param allValues - All form values (needed for cross-field validation like matchField)
-   * @returns Validation result for the single field
-   */
-  validateField(fieldName: string, value: any, allValues?: Record<string, any>): { isValid: boolean; errors: string[] } {
+  validateField(fieldName: string, value: any, allValues?: Record<string, any>): { isValid: boolean; errors: string[]; errorsByRule?: Record<string, boolean> } {
     const engine = this.engines[fieldName]
-    
+
     if (!engine) {
-      return { isValid: true, errors: [] }
+      return { isValid: true, errors: [], errorsByRule: {} }
     }
 
-    // Set context for cross-field validation rules
     if (allValues) {
       engine.getRules().forEach(rule => {
         const withContext = rule as unknown as { setContext?: (v: Record<string, any>) => void }
@@ -72,11 +68,6 @@ export default class FormValidationEngine {
     return engine.validateValue(value)
   }
 
-  /**
-   * Add a custom validation rule to a specific field engine
-   * @param fieldName - The name of the field to add the rule to
-   * @param rule - The custom validation rule to add
-   */
   addRuleToField(fieldName: string, rule: IValidationRule): void {
     const engine = this.engines[fieldName]
     if (engine) {
@@ -86,9 +77,27 @@ export default class FormValidationEngine {
     }
   }
 
-  /**
-   * Reset validation state for all field engines
-   */
+  removeRuleFromField(fieldName: string, ruleKey: string): void {
+    const engine = this.engines[fieldName]
+    if (engine) {
+      engine.removeRule(ruleKey)
+    }
+  }
+
+  addField(fieldName: string, rules: FieldRules = []): void {
+    if (!this.engines[fieldName]) {
+      this.engines[fieldName] = new ValidationEngine(rules)
+    }
+  }
+
+  removeField(fieldName: string): void {
+    delete this.engines[fieldName]
+  }
+
+  getFieldEngine(fieldName: string): ValidationEngine | undefined {
+    return this.engines[fieldName]
+  }
+
   reset(): void {
     Object.values(this.engines).forEach(engine => engine.reset())
   }

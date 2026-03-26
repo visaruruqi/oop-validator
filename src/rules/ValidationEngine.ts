@@ -16,9 +16,13 @@ import PasswordStrengthValidationRule from "./PasswordStrengthValidationRule";
 import IpAddressValidationRule from "./IpAddressValidationRule";
 import CurrencyValidationRule from "./CurrencyValidationRule";
 import SocialSecurityValidationRule from "./SocialSecurityValidationRule";
+import NumericMinValidationRule from "./NumericMinValidationRule";
+import NumericMaxValidationRule from "./NumericMaxValidationRule";
+import NumberValidationRule from "./NumberValidationRule";
 
 export default class ValidationEngine {
     private rules: IValidationRule[] = [];
+    private ruleKeyMap = new Map<IValidationRule, string>();
     private currentErrors: string[] = [];
     private currentIsValid: boolean = true;
 
@@ -29,37 +33,50 @@ export default class ValidationEngine {
     getRules(): IValidationRule[] {
         return this.rules;
     }
-    
-    /**
-     * Get current validation errors (stateful)
-     */
+
     getErrors(): string[] {
         return [...this.currentErrors];
     }
-    
-    /**
-     * Get current validation status (stateful)
-     */
+
     getIsValid(): boolean {
         return this.currentIsValid;
     }
-    
-    /**
-     * Reset validation state
-     */
+
     reset(): void {
         this.currentErrors = [];
         this.currentIsValid = true;
     }
 
-    addRule(rule: string | { rule: string, params: any, message?: string } | IValidationRule) {
-        if (typeof rule === 'object' && 'isValid' in rule) {
+    addRule(rule: string | { rule: string, params: any, message?: string } | IValidationRule, ruleInstance?: IValidationRule) {
+        if (ruleInstance !== undefined && typeof rule === 'string') {
+            // New overload: addRule('mykey', ruleInstance)
+            ruleInstance.ruleKey = rule;
+            this.rules.push(ruleInstance);
+            this.ruleKeyMap.set(ruleInstance, rule);
+        } else if (typeof rule === 'object' && 'isValid' in rule) {
+            // Existing: addRule(IValidationRule instance)
             this.rules.push(rule as IValidationRule);
+            if ((rule as IValidationRule).ruleKey) {
+                this.ruleKeyMap.set(rule as IValidationRule, (rule as IValidationRule).ruleKey);
+            }
         } else {
-            const newRule = this.createRule(rule);
+            // Existing: addRule('required') or addRule({ rule: 'min', params: ... })
+            const newRule = this.createRule(rule as string | { rule: string, params: any, message?: string });
             if (newRule) {
                 this.rules.push(newRule);
+                const key = typeof rule === 'string' ? rule : (rule as any).rule;
+                const normalizedKey = key.toLowerCase();
+                this.ruleKeyMap.set(newRule, normalizedKey);
+                newRule.ruleKey = normalizedKey;
             }
+        }
+    }
+
+    removeRule(key: string): void {
+        const idx = this.rules.findIndex(r => this.ruleKeyMap.get(r) === key);
+        if (idx !== -1) {
+            this.ruleKeyMap.delete(this.rules[idx]);
+            this.rules.splice(idx, 1);
         }
     }
 
@@ -130,6 +147,15 @@ export default class ValidationEngine {
             case 'ssn':
                 validationRule = new SocialSecurityValidationRule();
                 break;
+            case 'numericmin':
+                validationRule = new NumericMinValidationRule();
+                break;
+            case 'numericmax':
+                validationRule = new NumericMaxValidationRule();
+                break;
+            case 'number':
+                validationRule = new NumberValidationRule();
+                break;
             default:
                 console.warn(`Unknown validation rule: ${type}`);
                 break;
@@ -153,24 +179,22 @@ export default class ValidationEngine {
         return [false, `No matching rule found for type: ${type}`];
     }
 
-    validateValue(value: any): { isValid: boolean, errors: string[] } {
+    validateValue(value: any): { isValid: boolean, errors: string[], errorsByRule: Record<string, boolean> } {
         const errors: string[] = [];
+        const errorsByRule: Record<string, boolean> = {};
 
         this.rules.forEach(rule => {
             const [isValid, errorMessage] = rule.isValid(value);
             if (!isValid) {
                 errors.push(errorMessage);
+                const key = this.ruleKeyMap.get(rule);
+                if (key) errorsByRule[key] = true;
             }
         });
 
-        // Store state for stateful API
         this.currentErrors = errors;
         this.currentIsValid = errors.length === 0;
 
-        return {
-            isValid: errors.length === 0,
-            errors
-        };
+        return { isValid: errors.length === 0, errors, errorsByRule };
     }
 }
-
