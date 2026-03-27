@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/oop-validator.svg)](https://www.npmjs.com/package/oop-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/visaruruqi/oop-validator/releases/tag/v1.0.0)
 
 A class-based validation library for JavaScript and TypeScript. Stack rules on individual fields, validate entire forms at once, and get structured error output — in any framework or none at all. Ships with full TypeScript type declarations.
 
@@ -10,17 +11,30 @@ A class-based validation library for JavaScript and TypeScript. Stack rules on i
 - **Class-based rules** — each rule implements `IValidationRule`, making them easy to extend, compose, and test independently
 - **Framework-agnostic core** — works in Node.js, React, Angular, or vanilla JS with zero peer dependencies
 - **Optional Vue 3 composables** — `useValidation`, `useFormValidation`, and `useForm` for reactive form state out of the box
-- **AngularJS-style Vue directives** — `v-required`, `v-minlength`, `v-maxlength`, `v-pattern`, `v-min`, `v-max`, `v-type`, `v-messages`, `v-submit`, and more via `VValidationPlugin`
+- **AngularJS-style Vue directives** — `v-required`, `v-minlength`, `v-maxlength`, `v-pattern`, `v-min`, `v-max`, `v-type`, `v-messages`, `v-submit`, and more via `VueValidationPlugin`
 - **Form-level validation** — `FormValidationEngine` validates all fields at once and returns per-field errors plus a flat summary
 - **Custom error messages** — override the default error message per rule, per field
 - **20 built-in rules** — required, min/max length, email, phone, URL, credit card, password strength, and more
 
 ## Installation
 
-You can install oop-validator via npm:
-
 ```sh
 npm install oop-validator
+```
+
+The package ships two entry points:
+
+| Import path | Contents | Vue required? |
+|---|---|---|
+| `oop-validator` | Core rules + engines (framework-agnostic) | No |
+| `oop-validator/vue` | Composables + directives + plugin | Yes (peer dep) |
+
+```ts
+// Core — works in any environment
+import { ValidationEngine, FormValidationEngine } from 'oop-validator'
+
+// Vue layer — composables, directives, plugin
+import { useForm, useFormValidation, VueValidationPlugin } from 'oop-validator/vue'
 ```
 
 ## Quick Start
@@ -61,7 +75,7 @@ console.log(result.fieldErrors);
 // { email: [], password: ['This field must be at least 8 characters long.'] }
 ```
 
-The core library is **framework-agnostic** — works in Node.js, React, Angular, or any environment. Vue composables (`useValidation`, `useFormValidation`) are included and only require Vue as a peer dependency.
+The core library is **framework-agnostic** — works in Node.js, React, Angular, or any environment. Vue composables and directives are available separately via `oop-validator/vue` and only require Vue as a peer dependency.
 
 ## Table of Contents
 
@@ -367,13 +381,19 @@ The library includes optional Vue.js composables that provide reactive validatio
 npm install oop-validator vue
 ```
 
+All Vue-specific exports come from the `oop-validator/vue` subpath:
+
+```ts
+import { useValidation, useFormValidation, useForm } from 'oop-validator/vue'
+```
+
 ### useValidation - Single Field Validation
 
 The `useValidation` composable is perfect for validating individual form fields with real-time reactive feedback.
 
 ```javascript
 import { ref } from 'vue';
-import { useValidation } from 'oop-validator';
+import { useValidation } from 'oop-validator/vue';
 
 // Single field validation with automatic reactivity
 const email = ref('');
@@ -413,7 +433,7 @@ const manualCheck = () => {
 
 <script setup>
 import { ref } from 'vue';
-import { useValidation } from 'oop-validator';
+import { useValidation } from 'oop-validator/vue';
 
 const email = ref('');
 const { errors, isValid } = useValidation(email, ['required', 'email']);
@@ -430,7 +450,7 @@ The `useFormValidation` composable handles complex forms with multiple fields an
 
 ```javascript
 import { ref } from 'vue';
-import { useFormValidation } from 'oop-validator';
+import { useFormValidation } from 'oop-validator/vue';
 
 // Form data - works with ref(), reactive(), or any reactive type
 const formData = ref({
@@ -546,7 +566,7 @@ const handleNavigation = () => {
 
 <script setup>
 import { ref } from 'vue';
-import { useFormValidation } from 'oop-validator';
+import { useFormValidation } from 'oop-validator/vue';
 
 const formData = ref({
   firstName: '',
@@ -611,7 +631,8 @@ You can extend the validation system with your own custom rules by accessing the
 
 ```javascript
 import { ref } from 'vue';
-import { useFormValidation, IValidationRule } from 'oop-validator';
+import { useFormValidation } from 'oop-validator/vue';
+import { IValidationRule } from 'oop-validator';
 
 // 1. Define your custom validation rule
 class EvenNumberValidationRule extends IValidationRule {
@@ -790,10 +811,10 @@ Register the plugin once in your app entry:
 
 ```javascript
 import { createApp } from 'vue'
-import { VValidationPlugin } from 'oop-validator'
+import { VueValidationPlugin } from 'oop-validator/vue'
 import App from './App.vue'
 
-createApp(App).use(VValidationPlugin).mount('#app')
+createApp(App).use(VueValidationPlugin).mount('#app')
 ```
 
 ### useForm
@@ -803,7 +824,7 @@ createApp(App).use(VValidationPlugin).mount('#app')
 ```html
 <script setup>
 import { reactive } from 'vue'
-import { useForm } from 'oop-validator'
+import { useForm } from 'oop-validator/vue'
 
 const data = reactive({ name: '', email: '' })
 const form = useForm('myForm', data)
@@ -969,7 +990,7 @@ input.v-valid.v-dirty     { border-color: #38a169; }
 ```html
 <script setup>
 import { reactive } from 'vue'
-import { useForm } from 'oop-validator'
+import { useForm } from 'oop-validator/vue'
 
 const data = reactive({ name: '', email: '', age: '' })
 const form = useForm('contact', data)
@@ -1494,7 +1515,7 @@ useFormValidation(
 ```html
 <script setup>
 import { reactive } from 'vue'
-import { useForm } from 'oop-validator'
+import { useForm } from 'oop-validator/vue'
 
 const user = reactive({ name: '', email: '' })
 const form = useForm('userForm', user)  // ← one line replaces ng-form
@@ -1553,10 +1574,10 @@ function save() { console.log('Saving:', user) }
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import { VValidationPlugin } from 'oop-validator'
+import { VueValidationPlugin } from 'oop-validator/vue'
 import App from './App.vue'
 
-createApp(App).use(VValidationPlugin).mount('#app')
+createApp(App).use(VueValidationPlugin).mount('#app')
 ```
 
 ### Key Differences from AngularJS

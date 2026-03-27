@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createApp, reactive, nextTick, ref } from 'vue';
-import { VValidationPlugin } from './install';
+import { VueValidationPlugin } from './install';
 import { useForm } from '../useForm';
 import { formRegistry } from './registry';
 
@@ -18,7 +18,7 @@ function createTestForm(formName: string, data: Record<string, any>) {
     },
     template: `<form name="${formName}"></form>`,
   });
-  app.use(VValidationPlugin);
+  app.use(VueValidationPlugin);
   app.mount(container);
 
   // Manually register form in registry (since onMounted uses document.querySelector)

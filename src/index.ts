@@ -21,23 +21,9 @@ export { default as SocialSecurityValidationRule } from "./rules/SocialSecurityV
 export { default as FormValidationEngine } from "./form/FormValidationEngine";
 export { default as MatchFieldValidationRule } from "./rules/MatchFieldValidationRule";
 
-// Vue-specific exports (requires Vue to be available)
-export { default as useValidation } from "./vue/useValidation";
-export { default as useFormValidation } from "./vue/useFormValidation";
-
-// New Vue composables
-export { useForm } from './vue/useForm'
-export type { UseFormResult } from './vue/useForm'
-export type { FieldState, UseFormValidationOptions, UseFormValidationResult } from './vue/useFormValidation'
 export type { FormConfig, FieldRules, FormValidationResult } from './form/FormValidationEngine'
 
-// CSS class utilities
-export { computeFieldClasses, computeFormClasses } from './vue/cssClasses'
-
-// New numeric rules
+// Numeric rules
 export { default as NumericMinValidationRule } from './rules/NumericMinValidationRule'
 export { default as NumericMaxValidationRule } from './rules/NumericMaxValidationRule'
 export { default as NumberValidationRule } from './rules/NumberValidationRule'
-
-// Vue directives
-export { VValidationPlugin, vRequired, vMinlength, vMaxlength, vPattern, vMin, vMax, vType, vMessages, vMessage, vSubmit, vFormGroup } from './vue/directives/install'

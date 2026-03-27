@@ -247,7 +247,7 @@ Add to directive event handling:
 The `v-submit` directive should auto-set `novalidate` attribute on the `<form>` element in its `mounted` hook, so the developer doesn't need to remember it. AngularJS did this automatically when `ng-submit` was present.
 
 ### Build configuration
-The `vite.config.ts` entry point is `src/index.ts`. All new files must be importable from there. The directive files in `src/vue/directives/` will be tree-shaken by bundlers if not used — Vue users import `VValidationPlugin`, non-Vue users don't.
+The `vite.config.ts` entry point is `src/index.ts`. All new files must be importable from there. The directive files in `src/vue/directives/` will be tree-shaken by bundlers if not used — Vue users import `VueValidationPlugin`, non-Vue users don't.
 
 ### TypeScript type exports
 All new interfaces must be exported from `src/index.ts`:

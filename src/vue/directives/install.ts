@@ -11,7 +11,7 @@ import { vMessage } from './vMessage'
 import { vSubmit } from './vSubmit'
 import { vFormGroup } from './vFormGroup'
 
-export const VValidationPlugin = {
+export const VueValidationPlugin = {
   install(app: App) {
     app.directive('required', vRequired)
     app.directive('minlength', vMinlength)

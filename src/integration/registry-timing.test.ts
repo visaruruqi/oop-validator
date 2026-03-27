@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createApp, reactive, nextTick } from 'vue';
 import { useForm } from '../vue/useForm';
 import { formRegistry, formNameRegistry, getFormInstance } from '../vue/directives/registry';
-import { VValidationPlugin } from '../vue/directives/install';
+import { VueValidationPlugin } from '../vue/directives/install';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ function mountApp(formName: string, data: Record<string, any>, template?: string
     },
     template: template ?? `<form name="${formName}"></form>`,
   });
-  app.use(VValidationPlugin);
+  app.use(VueValidationPlugin);
   app.mount(container);
 
   return {
@@ -59,7 +59,7 @@ describe('formNameRegistry - synchronous setup() registration', () => {
       },
       template: '<form name="sync-test"></form>',
     });
-    app.use(VValidationPlugin);
+    app.use(VueValidationPlugin);
     app.mount(container);
 
     app.unmount();
@@ -144,7 +144,7 @@ describe('formNameRegistry - Map entry is short-lived', () => {
       },
       template: '<span></span>', // no <form> so onMounted querySelector fails
     });
-    app.use(VValidationPlugin);
+    app.use(VueValidationPlugin);
     app.mount(container);
 
     // Map entry exists right after mount (onMounted would have deleted it but
@@ -189,7 +189,7 @@ describe('formNameRegistry - duplicate name behaviour', () => {
       },
       template: '<form name="dup-check"></form>',
     });
-    app.use(VValidationPlugin);
+    app.use(VueValidationPlugin);
     app.mount(container);
 
     expect(seenDuringSetup).toBe(true);          // present during setup
@@ -243,7 +243,7 @@ describe('directive timing - v-required resolves form via formNameRegistry', () 
       },
       template: '<form name="post-mount"></form>',
     });
-    app.use(VValidationPlugin);
+    app.use(VueValidationPlugin);
     app.mount(container);
     await nextTick();
 

@@ -1,15 +1,18 @@
 {
   "name": "oop-validator",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "type": "module",
-  "main": "dist/oop-validator.umd.js",
-  "module": "dist/oop-validator.es.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/oop-validator.es.js",
-      "require": "./dist/oop-validator.umd.js"
+      "import": "./dist/index.js"
+    },
+    "./vue": {
+      "types": "./dist/types/vue.d.ts",
+      "import": "./dist/vue.js"
     }
   },
   "files": [
@@ -52,9 +55,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.9",
     "vitest": "^3.2.4",
-    "vue": "^3.5.22"
-  },
-  "dependencies": {
+    "vue": "^3.5.22",
     "vue-router": "^4.6.4"
   }
 }

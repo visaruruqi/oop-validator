@@ -6,6 +6,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-27
+
+First stable release. The public API is now considered production-ready.
+
+### Breaking Changes
+
+#### 1. Vue exports moved to `oop-validator/vue`
+
+All Vue composables, directives, and the plugin are no longer exported from the root `oop-validator` entry point. They now live at the dedicated `oop-validator/vue` subpath.
+
+This is a **tree-shaking improvement** — non-Vue consumers (React, Node.js, vanilla JS) no longer receive any Vue code in their bundles.
+
+```ts
+// ❌ Before (0.x) — Vue exports from root
+import { useValidation, useFormValidation, useForm, VValidationPlugin } from 'oop-validator'
+
+// ✅ Now — Vue exports from subpath
+import { useValidation, useFormValidation, useForm, VueValidationPlugin } from 'oop-validator/vue'
+```
+
+**What still comes from the root** (unchanged):
+```ts
+import {
+  ValidationEngine,
+  FormValidationEngine,
+  IValidationRule,
+  RequiredValidationRule,
+  // ... all rule classes
+} from 'oop-validator'
+```
+
+#### 2. `VValidationPlugin` renamed to `VueValidationPlugin`
+
+```ts
+// ❌ Before
+import { VValidationPlugin } from 'oop-validator'
+app.use(VValidationPlugin)
+
+// ✅ Now
+import { VueValidationPlugin } from 'oop-validator/vue'
+app.use(VueValidationPlugin)
+```
+
+### Added
+
+- **Subpath exports** — `oop-validator` (core) and `oop-validator/vue` (Vue layer) as separate entry points
+- **`dist/index.js`** — 2 KB core bundle, zero Vue dependency
+- **`dist/vue.js`** — 26 KB Vue bundle, only loaded when explicitly imported
+- `vue-router` moved from `dependencies` to `devDependencies` — no longer shipped to consumers
+
+### Migration from 0.x
+
+If you only use core classes (`ValidationEngine`, `FormValidationEngine`, rule classes) — **no changes needed**.
+
+If you use Vue composables or directives, update two things:
+
+1. Change import path from `'oop-validator'` to `'oop-validator/vue'`
+2. Rename `VValidationPlugin` to `VueValidationPlugin`
+
+```ts
+// main.ts
+import { VueValidationPlugin } from 'oop-validator/vue'    // ← /vue suffix
+createApp(App).use(VueValidationPlugin).mount('#app')
+
+// any component
+import { useForm, useFormValidation } from 'oop-validator/vue'
+```
+
 ## [0.6.0] - 2026-03-26
 
 ### Added — AngularJS Migration Layer
@@ -56,7 +124,7 @@ This release adds a full AngularJS `ng-form` / `FormController` equivalent for V
 - **`v-message`** — per-rule error span, auto-shows/hides based on `$error`
 - **`v-submit`** — intercepts form submit, auto-adds `novalidate`, calls `form.$submit(callback)`
 - **`v-form-group`** — group container marker
-- **`VValidationPlugin`** — Vue plugin for `app.use(VValidationPlugin)` to register all directives
+- **`VueValidationPlugin`** — Vue plugin for `app.use(VueValidationPlugin)` to register all directives
 
 #### Shared FieldController Architecture
 - One blur + one input listener per `<input>` element, shared across all directives on that element

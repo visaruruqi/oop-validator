@@ -7,7 +7,7 @@ Set up a router with example pages demonstrating every validation feature we imp
 ```
 src/
   router.ts                                    ← NEW: router config
-  main.ts                                      ← MODIFY: add router + VValidationPlugin
+  main.ts                                      ← MODIFY: add router + VueValidationPlugin
   App.vue                                      ← MODIFY: add nav sidebar + <router-view>
   components/
     ValidationForm.vue                         ← KEEP AS-IS (legacy example)
@@ -40,12 +40,12 @@ Routes:
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import { VValidationPlugin } from './index'  // our plugin
+import { VueValidationPlugin } from './index'  // our plugin
 import './assets/style.css'
 
 const app = createApp(App)
 app.use(router)
-app.use(VValidationPlugin)
+app.use(VueValidationPlugin)
 app.mount('#app')
 ```
 

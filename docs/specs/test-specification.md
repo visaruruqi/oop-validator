@@ -818,7 +818,7 @@ All directive tests use `// @vitest-environment jsdom` and mount real DOM elemen
 
 ```ts
 import { createApp, reactive, ref, nextTick } from 'vue'
-import { VValidationPlugin } from '../install'
+import { VueValidationPlugin } from '../install'
 import { useForm } from '../../useForm'
 
 /**
@@ -833,7 +833,7 @@ export function mountTestForm(template: string, setupFn: () => Record<string, an
     setup: setupFn,
     template,
   })
-  app.use(VValidationPlugin)
+  app.use(VueValidationPlugin)
   const vm = app.mount(container)
 
   const cleanup = () => {

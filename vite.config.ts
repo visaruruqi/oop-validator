@@ -11,18 +11,19 @@ export default defineConfig({
     },
     build: {
         lib: {
-            entry: './src/index.ts',
-            name: 'oop-validator',
-            fileName: (format) => `oop-validator.${format}.js`,
-            formats: ['es', 'umd']
+            entry: {
+                'index': './src/index.ts',
+                'vue':   './src/vue.ts',
+            },
+            formats: ['es'],
         },
         rollupOptions: {
-            // Don't bundle Vue - it should be provided by the consumer when using Vue features
             external: ['vue'],
             output: {
-                globals: {
-                    vue: 'Vue'
-                }
+                // ESM only — named entry files land at dist/index.js and dist/vue.js
+                entryFileNames: '[name].js',
+                chunkFileNames: 'chunks/[name]-[hash].js',
+                globals: { vue: 'Vue' },
             }
         },
         sourcemap: true

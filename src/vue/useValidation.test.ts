@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ref, nextTick } from 'vue'
-import { useValidation } from '../index'
+import { useValidation } from '../vue'
 
 describe('useValidation', () => {
   it('reactively validates values', async () => {

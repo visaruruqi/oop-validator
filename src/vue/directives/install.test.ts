@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { createApp } from 'vue';
-import { VValidationPlugin } from './install';
+import { VueValidationPlugin } from './install';
 
-describe('VValidationPlugin', () => {
+describe('VueValidationPlugin', () => {
   it('should register all directives on app', () => {
     const app = createApp({ template: '<div></div>' });
     const directiveSpy = vi.spyOn(app, 'directive');
-    app.use(VValidationPlugin);
+    app.use(VueValidationPlugin);
 
     const directiveNames = directiveSpy.mock.calls.map(c => c[0]);
     expect(directiveNames).toContain('required');
