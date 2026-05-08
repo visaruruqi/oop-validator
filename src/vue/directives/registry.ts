@@ -1,3 +1,4 @@
+import { watch, type WatchStopHandle } from 'vue'
 import type { UseFormValidationResult } from '../useFormValidation'
 
 export type FormInstance = UseFormValidationResult
@@ -16,6 +17,7 @@ export interface FieldController {
   inputHandler: () => void
   changeHandler?: () => void
   directiveCount: number
+  stopWatcher?: WatchStopHandle
 }
 
 export const fieldControllers = new WeakMap<HTMLElement, FieldController>()
@@ -84,12 +86,23 @@ export function ensureFieldController(
       el.addEventListener('change', inputHandler)
     }
 
+    // Reactively repaint CSS classes whenever the field's state changes —
+    // e.g. when validate()/$validate()/$submit()/touchAll() are called from
+    // a button handler, no DOM event fires but fields.value mutates.
+    // deep:true because $error is a nested Record<string, boolean>.
+    const stopWatcher = watch(
+      () => form.fields.value[fieldName],
+      () => updateCssClasses(el, form, fieldName),
+      { deep: true },
+    )
+
     controller = {
       fieldName,
       blurHandler,
       inputHandler,
       changeHandler,
       directiveCount: 0,
+      stopWatcher,
     }
     fieldControllers.set(el, controller)
 
@@ -116,6 +129,8 @@ export function releaseFieldController(el: HTMLElement, form: FormInstance): voi
       el.removeEventListener('change', controller.changeHandler)
     }
 
+    controller.stopWatcher?.()
+
     fieldControllers.delete(el)
     form.unregisterField(controller.fieldName)
   }
@@ -138,4 +153,19 @@ export function updateCssClasses(el: HTMLElement, form: FormInstance, fieldName:
     el.classList.toggle(`v-valid-${ruleKey}`, !failing)
     el.classList.toggle(`v-invalid-${ruleKey}`, failing)
   }
+}
+
+// Helper: update aggregate CSS classes on the <form> element. No
+// v-form-valid/v-form-invalid — those would clash with per-field v-valid /
+// v-invalid rules in CSS. Authors compose with `:has(.v-invalid)` if needed.
+export function updateFormCssClasses(el: HTMLFormElement, form: FormInstance): void {
+  const fieldStates = Object.values(form.fields.value)
+  const anyTouched = fieldStates.some(f => f.$touched)
+
+  el.classList.toggle('v-form-submitted', form.$submitted.value)
+  el.classList.toggle('v-form-pristine', form.$pristine.value)
+  el.classList.toggle('v-form-dirty', form.$dirty.value)
+  el.classList.toggle('v-form-touched', anyTouched)
+  el.classList.toggle('v-form-untouched', !anyTouched)
+  el.classList.toggle('v-form-pending', form.$pending.value)
 }

@@ -1,7 +1,7 @@
-import { onMounted, onUnmounted, Ref } from 'vue'
+import { onMounted, onUnmounted, watchEffect, Ref, type WatchStopHandle } from 'vue'
 import useFormValidation from './useFormValidation'
 import type { UseFormValidationOptions } from './useFormValidation'
-import { formRegistry, formNameRegistry } from './directives/registry'
+import { formRegistry, formNameRegistry, updateFormCssClasses } from './directives/registry'
 
 export type UseFormResult = ReturnType<typeof useFormValidation> & {
   [key: string]: any
@@ -17,11 +17,16 @@ export function useForm(
   // Captured in onMounted so onUnmounted doesn't have to re-query a possibly
   // detached DOM (container.remove() runs before onUnmounted in tests and SSR).
   let mountedFormEl: HTMLFormElement | null = null
+  let stopFormClassWatcher: WatchStopHandle | null = null
 
   onMounted(() => {
     mountedFormEl = document.querySelector(`form[name="${name}"]`) as HTMLFormElement | null
     if (mountedFormEl) {
       formRegistry.set(mountedFormEl, formInstance)
+      const formEl = mountedFormEl
+      stopFormClassWatcher = watchEffect(() => {
+        updateFormCssClasses(formEl, formInstance)
+      })
     }
     // WeakMap is now the source of truth — drop the strong Map reference
     formNameRegistry.delete(name)
@@ -31,6 +36,8 @@ export function useForm(
     // formNameRegistry entry is already deleted in onMounted; clean up in case
     // onMounted never fired (e.g. SSR or component destroyed before mount).
     formNameRegistry.delete(name)
+    stopFormClassWatcher?.()
+    stopFormClassWatcher = null
     if (mountedFormEl) {
       formRegistry.delete(mountedFormEl)
       mountedFormEl = null

@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-08
+
+### Added
+
+- **Reactive CSS classes** — `v-invalid`, `v-valid`, `v-touched`, `v-invalid-{rule}` (and friends) now repaint on inputs whenever validation state changes programmatically. Calling `form.validate()`, `form.$validate()`, `form.$submit()`, `form.touch()`, or `form.touchAll()` from a button handler now updates the DOM immediately — no blur/input event required.
+- **Form-level CSS classes** — the `<form>` element registered via `useForm()` now toggles aggregate state classes: `v-form-submitted`, `v-form-pristine`, `v-form-dirty`, `v-form-touched`, `v-form-untouched`, `v-form-pending`. Useful for whole-form styling (e.g. `form.v-form-touched { background: #fee }`).
+
+### Notes
+
+- `form.validate()` is still a pure validation call — it does **not** mark fields as touched and does **not** add `v-form-touched` / `v-form-submitted`. To reveal errors based on `.v-touched.v-invalid` styling rules, call `form.touchAll()` (or use `v-submit` / `form.$submit()`).
+- No breaking changes. All existing class names and APIs are unchanged.
+
 ## [1.0.0] - 2026-03-27
 
 First stable release. The public API is now considered production-ready.

@@ -983,6 +983,33 @@ input.v-invalid.v-touched { border-color: #e53e3e; }
 input.v-valid.v-dirty     { border-color: #38a169; }
 ```
 
+The `<form>` element also gets aggregate state classes (since v1.1.0):
+
+| Class | When applied |
+|---|---|
+| `v-form-pristine` | No field has been changed |
+| `v-form-dirty` | At least one field has been changed |
+| `v-form-touched` | At least one field has been blurred or `touchAll()` was called |
+| `v-form-untouched` | No field has been touched |
+| `v-form-submitted` | `$submit()` (or `v-submit`) has been triggered |
+| `v-form-pending` | Async validation is in progress |
+
+#### Programmatic validation
+
+Calling `form.validate()` or `form.$validate()` from a button handler updates the input classes immediately — no blur or focus needed:
+
+```ts
+const form = useForm('myForm', formData)
+
+async function handleSave() {
+  const result = form.validate()
+  if (!result.isValid) return     // .v-invalid is already on the bad inputs
+  await api.save(formData)
+}
+```
+
+Note: `validate()` does **not** mark fields as touched. If your CSS gates errors behind `.v-touched.v-invalid`, also call `form.touchAll()` first, or use `form.$submit(handleSave)` which runs both.
+
 ---
 
 ### Full Example
