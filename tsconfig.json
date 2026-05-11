@@ -11,7 +11,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["vite/client"], // Add this line
+    "types": ["vite/client"],
 
     /* Linting */
     "strict": true,
@@ -27,10 +27,10 @@
     "moduleDetection": "force",
     "noEmit": false,
 
-
-    "declaration": true,           // Add this line
-    "declarationDir": "./dist/types", // Add this line
-    "outDir": "./dist"             // Ensure this line is included
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "src/**/*.test.ts", "src/integration/**/*.test.ts"]

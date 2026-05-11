@@ -18,7 +18,8 @@ A class-based validation library for JavaScript/TypeScript with Vue 3 composable
 npx vitest run          # run all tests
 npx vitest run --watch  # watch mode
 npx vitest --coverage   # with coverage
-npm run build           # build library
+npm run typecheck       # tsc --noEmit (catches type errors build skips)
+npm run build           # build library (vite + tsc --emitDeclarationOnly)
 ```
 
 ## Key Design Decisions

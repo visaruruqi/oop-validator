@@ -1,6 +1,6 @@
 {
   "name": "oop-validator",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -29,16 +29,28 @@
   },
   "homepage": "https://github.com/visaruruqi/oop-validator",
   "description": "A versatile and robust validation library for any UI framework.",
+  "sideEffects": false,
   "keywords": [
     "validation",
-    "library",
-    "framework-agnostic"
+    "validator",
+    "form",
+    "form-validation",
+    "vue",
+    "vue3",
+    "composable",
+    "directive",
+    "typescript",
+    "class-based",
+    "framework-agnostic",
+    "library"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "npm run typecheck && vite build && tsc --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
     "preview": "vite preview",
-    "test": "vitest"
+    "prepublishOnly": "npm test -- --run && npm run build"
   },
   "peerDependencies": {
     "vue": "^3.0.0"

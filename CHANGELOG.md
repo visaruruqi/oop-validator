@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-05-11
+
+### Changed
+
+- Stopped shipping source maps in the published package (`dist/index.js.map`, `dist/vue.js.map`) — reduces install size by ~93 KB.
+- Stopped shipping `dist/vite.svg` (Vite placeholder asset) in the published package.
+- Declared `"sideEffects": false` in package.json — improves tree-shaking in consumer bundles.
+- Expanded npm `keywords` for better discoverability (vue, vue3, form, composable, directive, typescript, class-based, …).
+
+### Fixed
+
+- Fixed broken `@` Vite path alias (`/src` → absolute project `src/` via `path.resolve`).
+- Cleaned stray `// Add this line` tutorial comments from `tsconfig.json` and added explicit `rootDir`.
+- Removed empty `node` artifact from repo root.
+
+### Added (dev tooling)
+
+- `npm run typecheck` script for full type-checking without emit.
+- `npm run build` now runs typecheck first — type errors in function bodies can no longer slip through into the published `dist/`.
+- `prepublishOnly` script that runs tests + build (which now includes typecheck) before publishing.
+
 ## [1.1.0] - 2026-05-08
 
 ### Added

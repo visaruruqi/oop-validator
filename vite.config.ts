@@ -1,15 +1,17 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import path from 'node:path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [vue()],
     resolve: {
         alias: {
-            '@': '/src',
+            '@': path.resolve(__dirname, 'src'),
         },
     },
     build: {
+        copyPublicDir: false,
         lib: {
             entry: {
                 'index': './src/index.ts',
@@ -26,6 +28,6 @@ export default defineConfig({
                 globals: { vue: 'Vue' },
             }
         },
-        sourcemap: true
+        sourcemap: false
     }
 });
