@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-05-11
+
+### Fixed
+
+- `RegexValidationRule` now defers `null`, `undefined`, and `''` consistently to the `required` rule (previously empty string was treated as valid but null/undefined were treated as invalid). Non-string values (numbers, booleans, objects) remain invalid — they can't be regex-tested. This aligns with the convention used by `HexColorValidationRule` and the README custom-rule example, and makes optional regex-validated fields behave intuitively (use `required` to enforce presence).
+
 ## [1.1.1] - 2026-05-11
 
 ### Changed
