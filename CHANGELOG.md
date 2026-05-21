@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.2] - 2026-05-11
+## [1.1.3] - 2026-05-21
+
+### Fixed
+
+- `useForm()` now registers `<form>` elements that mount **after** its `onMounted` runs — conditionally-rendered forms (behind `v-if`, `<Suspense>`, an async data gate, or a route-level lazy mount) are now supported. Previously `useForm()` did a one-shot `document.querySelector('form[name="…"]')` in `onMounted` and unconditionally tore down the `formNameRegistry` entry, even when the form was not yet in the DOM. The result: `v-required` (and the other `v-*` directives) inside such a form could resolve no form instance, logged `[v-required] No useForm() found for this <form>`, registered no rule, and `form.validate()` silently returned `isValid: true`. The form-element lookup is now resilient — the name-based fallback survives until the element is actually registered, and `getFormInstance()` promotes a late-mounting `<form>` into `formRegistry` (starting the form-level CSS-class watcher) on first directive lookup. Non-conditional forms, `onUnmounted` cleanup, and SSR are unaffected. (`useFormValidation` was never affected — it has no DOM form-element registration.)
 
 ### Fixed
 

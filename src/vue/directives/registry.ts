@@ -11,6 +11,21 @@ export const formRegistry = new WeakMap<HTMLFormElement, FormInstance>()
 // Directives mount before onMounted, so we need a way to find the form by name.
 export const formNameRegistry = new Map<string, FormInstance>()
 
+// Per-form callback that binds the <form> element into formRegistry and starts
+// the form-level CSS class watcher. Stored so getFormInstance() can promote a
+// conditionally-rendered <form> that mounted after useForm()'s onMounted fired.
+type FormElementBinder = (formEl: HTMLFormElement) => void
+const formElementBinders = new Map<string, FormElementBinder>()
+
+// Called by useForm() to register (or clear, with null) its lazy element binder.
+export function registerFormElement(name: string, binder: FormElementBinder | null): void {
+  if (binder) {
+    formElementBinders.set(name, binder)
+  } else {
+    formElementBinders.delete(name)
+  }
+}
+
 export interface FieldController {
   fieldName: string
   blurHandler: () => void
@@ -50,8 +65,14 @@ export function getFormInstance(el: HTMLElement): FormInstance | null {
   if (!formEl) return null
   if (formRegistry.has(formEl)) return formRegistry.get(formEl)!
   const name = formEl.getAttribute('name')
-  if (name) return formNameRegistry.get(name) ?? null
-  return null
+  if (!name) return null
+  const instance = formNameRegistry.get(name)
+  if (!instance) return null
+  // Promote a conditionally-rendered <form> that mounted after useForm()'s
+  // onMounted ran: bind it into formRegistry and start its class watcher now.
+  // The binder is idempotent and clears the formNameRegistry entry itself.
+  formElementBinders.get(name)?.(formEl)
+  return instance
 }
 
 // Helper: ensure a field controller exists for an element
