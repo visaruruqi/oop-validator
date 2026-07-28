@@ -3,7 +3,7 @@ import EmailValidationRule from '../../rules/EmailValidationRule'
 import UrlValidationRule from '../../rules/UrlValidationRule'
 import DateValidationRule from '../../rules/DateValidationRule'
 import NumberValidationRule from '../../rules/NumberValidationRule'
-import { getFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
+import { getFormInstance, getBoundFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
 
 interface CleanupData {
   fieldName: string
@@ -101,7 +101,7 @@ export const vType: Directive<HTMLElement, string | undefined> = {
     const cleanup = cleanupMap.get(el)
     if (!cleanup) return
 
-    const form = getFormInstance(el)
+    const form = getBoundFormInstance(el)
     if (form) {
       if (cleanup.typeKey) {
         form.unregisterRule(cleanup.fieldName, cleanup.typeKey)

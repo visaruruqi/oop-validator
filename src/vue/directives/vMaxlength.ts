@@ -1,6 +1,6 @@
 import type { Directive, DirectiveBinding } from 'vue'
 import MaxValidationRule from '../../rules/MaxValidationRule'
-import { getFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
+import { getFormInstance, getBoundFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
 
 interface CleanupData {
   fieldName: string
@@ -59,7 +59,7 @@ export const vMaxlength: Directive<HTMLElement, number> = {
     const cleanup = cleanupMap.get(el)
     if (!cleanup) return
 
-    const form = getFormInstance(el)
+    const form = getBoundFormInstance(el)
     if (form) {
       form.unregisterRule(cleanup.fieldName, 'maxlength')
       releaseFieldController(el, form)
