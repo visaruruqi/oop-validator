@@ -75,12 +75,28 @@ export function getFormInstance(el: HTMLElement): FormInstance | null {
   return instance
 }
 
+// The form an element's directives bound to at mount time.
+// Vue removes an element from the DOM *before* running a directive's `unmounted`
+// hook, so `el.closest('form')` is null by then and the lookup above cannot find
+// the form to clean up against. Remembering the instance keeps unmount cleanup
+// working for conditionally rendered fields (v-if / v-show swaps).
+const boundForms = new WeakMap<HTMLElement, FormInstance>()
+
+// Helper: get the form an element is bound to, usable after the element has been
+// detached. Falls back to the DOM lookup for elements that never mounted a
+// field-controller directive.
+export function getBoundFormInstance(el: HTMLElement): FormInstance | null {
+  return boundForms.get(el) ?? getFormInstance(el)
+}
+
 // Helper: ensure a field controller exists for an element
 export function ensureFieldController(
   el: HTMLElement,
   form: FormInstance,
   fieldName: string,
 ): FieldController {
+  boundForms.set(el, form)
+
   let controller = fieldControllers.get(el)
 
   if (!controller) {
@@ -153,6 +169,7 @@ export function releaseFieldController(el: HTMLElement, form: FormInstance): voi
     controller.stopWatcher?.()
 
     fieldControllers.delete(el)
+    boundForms.delete(el)
     form.unregisterField(controller.fieldName)
   }
 }

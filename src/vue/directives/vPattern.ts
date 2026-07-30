@@ -1,6 +1,6 @@
 import type { Directive, DirectiveBinding } from 'vue'
 import RegexValidationRule from '../../rules/RegexValidationRule'
-import { getFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
+import { getFormInstance, getBoundFormInstance, ensureFieldController, releaseFieldController, updateCssClasses } from './registry'
 
 interface CleanupData {
   fieldName: string
@@ -75,7 +75,7 @@ export const vPattern: Directive<HTMLElement, string | RegExp> = {
     const cleanup = cleanupMap.get(el)
     if (!cleanup) return
 
-    const form = getFormInstance(el)
+    const form = getBoundFormInstance(el)
     if (form) {
       form.unregisterRule(cleanup.fieldName, 'pattern')
       releaseFieldController(el, form)
