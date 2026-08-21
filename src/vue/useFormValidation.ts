@@ -7,6 +7,20 @@ export interface UseFormValidationOptions {
   validateOnMount?: boolean
   asyncValidators?: Record<string, Record<string, (value: any) => Promise<boolean>>>
   debounce?: number
+  /**
+   * What makes a field $dirty.
+   *
+   * 'value' (default) — the value differs from the initial snapshot; any
+   * model write counts, including programmatic ones. The right default for
+   * the standalone composable, which may run with no DOM at all.
+   *
+   * 'interaction' — AngularJS semantics: writes made before the first real
+   * user input (DOM input/change, wired up by the directives, or an explicit
+   * $noteUserInput()) are hydration and move the baseline instead of
+   * dirtying the form. useForm() defaults to this, since ng-parity is its
+   * contract and its directives supply the input signal.
+   */
+  dirtyTracking?: 'value' | 'interaction'
 }
 
 export interface FieldState {
@@ -57,6 +71,7 @@ export interface UseFormValidationResult {
   $setDirty: () => void
   $setValidity: (fieldName: string, key: string, isValid: boolean) => void
   $reset: (values?: Record<string, any>) => void
+  $noteUserInput: () => void
   cssClasses: ComputedRef<Record<string, boolean>>
 
   // NEW — directive-friendly API
@@ -188,7 +203,7 @@ export default function useFormValidation(
   config: FormConfig,
   options: UseFormValidationOptions = {}
 ): UseFormValidationResult {
-  const { validationStrategy = 'all', validateOnMount = true, asyncValidators = {}, debounce: debounceMs = 300 } = options
+  const { validationStrategy = 'all', validateOnMount = true, asyncValidators = {}, debounce: debounceMs = 300, dirtyTracking = 'value' } = options
 
   const shouldValidateOnMount: boolean = validateOnMount
 
@@ -210,6 +225,11 @@ export default function useFormValidation(
 
   // NEW: $submitted state
   const $submitted = ref(false)
+
+  // True once the user has actually edited a field (DOM input/change — wired
+  // up by the field controller). Until then, model writes are the app
+  // populating the form (async load, applied defaults), not user edits.
+  const hasUserInput = ref(false)
 
   // Track known fields (from config + dynamically registered)
   const knownFields = ref<Set<string>>(new Set(Object.keys(config)))
@@ -348,6 +368,7 @@ export default function useFormValidation(
     initialValues.value = { ...unref(formValues) }
     engine.reset()
     $submitted.value = false
+    hasUserInput.value = false
     asyncController.abortAll()
     manualValidity.value = {}
 
@@ -516,6 +537,7 @@ export default function useFormValidation(
 
   const $setPristine = () => {
     $submitted.value = false
+    hasUserInput.value = false
     initialValues.value = { ...unref(formValues) }
     const updatedFields: Record<string, FieldState> = {}
     Object.entries(fields.value).forEach(([fieldName, f]) => {
@@ -546,6 +568,7 @@ export default function useFormValidation(
   }
 
   const $setDirty = () => {
+    hasUserInput.value = true
     const updatedFields: Record<string, FieldState> = {}
     Object.entries(fields.value).forEach(([fieldName, f]) => {
       updatedFields[fieldName] = {
@@ -586,6 +609,10 @@ export default function useFormValidation(
         isValid: overallValid,
       }
     }
+  }
+
+  const $noteUserInput = () => {
+    hasUserInput.value = true
   }
 
   const $reset = (values?: Record<string, any>) => {
@@ -637,6 +664,14 @@ export default function useFormValidation(
     formValues,
     (newValues: Record<string, any>) => {
       if (isResetting) return
+
+      // In 'interaction' mode a write before any user input is hydration,
+      // not an edit — AngularJS never set $dirty for programmatic model
+      // changes. Move the dirty baseline with the write so loaded data
+      // compares clean.
+      if (dirtyTracking === 'interaction' && !hasUserInput.value) {
+        initialValues.value = { ...newValues }
+      }
 
       if (validationStrategy === 'changed') {
         const changedFields = Object.keys(newValues).filter(
@@ -719,6 +754,7 @@ export default function useFormValidation(
     $setDirty,
     $setValidity,
     $reset,
+    $noteUserInput,
     cssClasses,
 
     // NEW: directive-friendly API

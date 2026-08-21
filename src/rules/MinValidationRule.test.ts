@@ -18,3 +18,19 @@ describe('MinValidationRule', () => {
         expect(errorMessage).toBe('This field must be at least 5 characters long.');
     });
 });
+
+describe('MinValidationRule - numeric model values', () => {
+    it('should measure numbers by their string form', () => {
+        const rule = new MinValidationRule();
+        rule.setParams({ length: 2 });
+        expect(rule.isValid(42 as any)[0]).toBe(true);   // "42" -> 2 chars
+        expect(rule.isValid(7 as any)[0]).toBe(false);   // "7" -> 1 char
+    });
+
+    it('should still reject non-coercible non-strings', () => {
+        const rule = new MinValidationRule();
+        rule.setParams({ length: 2 });
+        expect(rule.isValid(true as any)[0]).toBe(false);
+        expect(rule.isValid({} as any)[0]).toBe(false);
+    });
+});

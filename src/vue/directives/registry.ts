@@ -106,6 +106,12 @@ export function ensureFieldController(
     }
 
     const inputHandler = () => {
+      // A DOM input/change is the one signal that a human, not the app,
+      // changed the model. It freezes the auto-moving dirty baseline (see
+      // hasUserInput in useFormValidation). Deliberately not done on blur:
+      // tabbing through a field is not an edit — AngularJS set $dirty from
+      // typing ($setViewValue), never from visiting.
+      form.$noteUserInput()
       form.validate()
       updateCssClasses(el, form, fieldName)
     }

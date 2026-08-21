@@ -12,7 +12,10 @@ export function useForm(
   formData: Ref<Record<string, any>> | Record<string, any>,
   options?: UseFormValidationOptions
 ): UseFormResult {
-  const result = useFormValidation(formData, {}, { validateOnMount: false, ...options })
+  // dirtyTracking 'interaction' = AngularJS $dirty semantics (set by typing,
+  // never by programmatic writes) — this wrapper's whole contract. Callers can
+  // still pass dirtyTracking: 'value' to keep plain value-diff tracking.
+  const result = useFormValidation(formData, {}, { validateOnMount: false, dirtyTracking: 'interaction', ...options })
 
   // Captured here so onUnmounted doesn't have to re-query a possibly detached
   // DOM (container.remove() runs before onUnmounted in tests and SSR). These

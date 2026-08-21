@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-21
+
+### Added
+
+- `dirtyTracking` option on `useFormValidation` (`'value'` | `'interaction'`, default `'value'`). In `'interaction'` mode, model writes made before the first real user input are treated as hydration — an async load, applied defaults — and move the dirty baseline with them instead of marking fields `$dirty`. The first DOM `input`/`change` on a directive-bound element freezes the baseline; from then on writes are user edits. This mirrors AngularJS, where `$dirty` was only ever set by `$setViewValue` (typing), never by programmatic model changes. Deliberately not armed by `blur`: tabbing through a field is not an edit.
+- `$noteUserInput()` on the form instance — explicitly marks that user interaction happened, for custom components that write `v-model` without dispatching DOM events.
+
+### Changed
+
+- **`useForm()` now defaults `dirtyTracking: 'interaction'`.** AngularJS parity is that wrapper's documented contract (`userForm.$dirty` → `form.$dirty`), and its directives supply the input signal. Consequence: loading a record into the model (`Object.assign(formData, record)` after a fetch) no longer marks every field `$dirty`/`.v-dirty` — previously an edit screen lit up green/dirty styling on landing and `isModelDirty` reported `true` before any user action. Existing `form.reset()`-after-load workarounds become harmless no-ops. Pass `dirtyTracking: 'value'` to `useForm()` to restore the old behavior. The standalone `useFormValidation` composable is unchanged (default `'value'`) — it can run with no DOM, where no input event could ever arm interaction tracking.
+
+### Fixed
+
+- `RegexValidationRule`, `MaxValidationRule`, and `MinValidationRule` now validate **numbers by their string form** instead of rejecting every non-string outright. AngularJS validated the view value (always a string for a text input); these rules see the model value, so a numeric field — e.g. an amount arriving as JSON number `0` — failed `v-pattern`/`v-maxlength`/`v-minlength` before its content was looked at, blocking submission of forms the user never touched. Booleans, objects, and arrays are still invalid. (`v-max`/`v-min` were never affected — `NumericMax`/`NumericMin` already coerce with `Number()`.)
+
 ## [1.1.3] - 2026-05-21
 
 ### Fixed

@@ -1,4 +1,5 @@
 import IValidationRule from './IValidationRule'
+import { coerceToValidatableString } from './coerceToString'
 
 export default class RegexValidationRule extends IValidationRule {
     private errorMessage: string = 'Field is invalid.'
@@ -15,12 +16,14 @@ export default class RegexValidationRule extends IValidationRule {
             return [true, '']
         }
 
-        // Non-string values can't be regex-tested — treat as invalid
-        if (typeof param !== 'string') {
+        // Numbers are tested by their string form (the text the user sees in
+        // the input); anything else non-string can't be regex-tested.
+        const value = coerceToValidatableString(param)
+        if (value === null) {
             return [false, this.errorMessage]
         }
 
-        const isValid = new RegExp(this.regexString).test(param)
+        const isValid = new RegExp(this.regexString).test(value)
         return [isValid, isValid ? '' : this.errorMessage]
     }
 

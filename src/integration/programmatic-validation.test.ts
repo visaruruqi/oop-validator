@@ -231,6 +231,12 @@ describe('Form element gets aggregate v-form-* classes', () => {
     const formEl = container.querySelector('form') as HTMLFormElement;
     expect(formEl.classList.contains('v-form-pristine')).toBe(true);
 
+    // useForm defaults dirtyTracking: 'interaction' — a bare programmatic
+    // write is hydration and moves the baseline. A real user edit is a DOM
+    // input event plus the model write it produces.
+    const inputEl = container.querySelector('input') as HTMLInputElement;
+    inputEl.value = 'a@b.com';
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
     data.email = 'a@b.com';
     await nextTick();
 

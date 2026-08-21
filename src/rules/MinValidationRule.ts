@@ -1,4 +1,5 @@
 import IValidationRule from "./IValidationRule";
+import { coerceToValidatableString } from "./coerceToString";
 
 export default class MinValidationRule extends IValidationRule {
     private minLength: number = 0;
@@ -10,12 +11,13 @@ export default class MinValidationRule extends IValidationRule {
             return [true, ""];
         }
         
-        // Reject non-string values
-        if (typeof param !== 'string') {
+        // Numbers are measured by their string form; other non-strings fail.
+        const value = coerceToValidatableString(param);
+        if (value === null) {
             return [false, this.errorMessage || `This field must be a string.`];
         }
-        
-        const isValid = param.length >= this.minLength;
+
+        const isValid = value.length >= this.minLength;
         return [isValid, isValid ? "" : this.errorMessage || `This field must be at least ${this.minLength} characters long.`];
     }
 

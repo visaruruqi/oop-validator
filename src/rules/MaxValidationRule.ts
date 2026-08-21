@@ -1,4 +1,5 @@
 import IValidationRule from "./IValidationRule";
+import { coerceToValidatableString } from "./coerceToString";
 
 export default class MaxValidationRule extends IValidationRule {
     private maxLength: number = Infinity;
@@ -10,12 +11,13 @@ export default class MaxValidationRule extends IValidationRule {
             return [true, ""];
         }
         
-        // Reject non-string values
-        if (typeof param !== 'string') {
+        // Numbers are measured by their string form; other non-strings fail.
+        const value = coerceToValidatableString(param);
+        if (value === null) {
             return [false, this.errorMessage || `This field must be a string.`];
         }
-        
-        const isValid = param.length <= this.maxLength;
+
+        const isValid = value.length <= this.maxLength;
         return [isValid, isValid ? "" : this.errorMessage || `This field must be no more than ${this.maxLength} characters long.`];
     }
 
