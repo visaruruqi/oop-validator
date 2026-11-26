@@ -20,7 +20,7 @@ describe('useValidation', () => {
   })
 
   it('re-validates on every subsequent ref change, not just on mount', async () => {
-    const value = ref('')
+    const value = ref('a')
     const { isValid } = useValidation(value, [{ rule: 'min', params: { length: 3 } }])
 
     expect(isValid.value).toBe(false)

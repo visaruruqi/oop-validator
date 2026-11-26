@@ -17,6 +17,20 @@ describe('MinValidationRule', () => {
         expect(isValid).toBe(false);
         expect(errorMessage).toBe('This field must be at least 5 characters long.');
     });
+
+    it('should pass an empty string so an optional field cleared by the user is valid', () => {
+        const rule = new MinValidationRule();
+        rule.setParams({ length: 2 });
+        const [isValid, errorMessage] = rule.isValid('');
+        expect(isValid).toBe(true);
+        expect(errorMessage).toBe('');
+    });
+
+    it('should still fail whitespace shorter than min length', () => {
+        const rule = new MinValidationRule();
+        rule.setParams({ length: 2 });
+        expect(rule.isValid(' ')[0]).toBe(false);
+    });
 });
 
 describe('MinValidationRule - numeric model values', () => {

@@ -50,14 +50,13 @@ describe('FormValidationEngine', () => {
 
     expect(result.isValid).toBe(false)
     expect(result.fieldErrors.username).toEqual([
-      'This field is required.',
-      'This field must be at least 3 characters long.'
+      'This field is required.'
     ])
     expect(result.fieldErrors.email).toEqual([
       'This field must be a valid email address.'
     ])
     expect(result.summary).toContain('username: This field is required.')
-    expect(result.summary).toContain(
+    expect(result.summary).not.toContain(
       'username: This field must be at least 3 characters long.'
     )
     expect(result.summary).toContain(
