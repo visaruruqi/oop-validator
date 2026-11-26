@@ -6,8 +6,8 @@ export default class MinValidationRule extends IValidationRule {
     private errorMessage: string = "";
 
     isValid(param: string): [boolean, string] {
-        // Pass validation for null/undefined - let required rule handle presence
-        if (param == null) {
+        // Pass validation for empty values - let required rule handle presence (AngularJS ngMinlength parity)
+        if (param == null || param === "") {
             return [true, ""];
         }
         

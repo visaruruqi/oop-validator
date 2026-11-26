@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `MinValidationRule` (`v-minlength`, `{ rule: 'min' }`) now defers `''` to the `required` rule, the same way it already deferred `null`/`undefined` and the way `RegexValidationRule` has since 1.1.3. Previously an optional field the user typed into and then cleared failed with "too short", and a required field that was cleared reported both `required` and `minlength` — so `v-messages` showed the minlength message whenever it was listed before `required`. AngularJS `ngMinlength` passed empty values (`$isEmpty(value) || value.length >= minlength`). Whitespace-only values are still measured, so `' '` with `length: 2` still fails.
+
 ## [1.2.0] - 2026-08-21
 
 ### Added
